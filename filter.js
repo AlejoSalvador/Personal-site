@@ -141,9 +141,9 @@ var filterFS = `
 		  
 	}
 	
-	float planeDistance(const in vec3 positionA, const in vec3 normalA, const in vec3 positionB, const in vec3 normalB) {   // se usa para la version con planos normales
+	float planeDistance(const in vec3 positionA, const in vec3 positionB, const in vec3 normalB) {   // se usa para la version con planos normales
 	   vec3 positionDelta = positionB-positionA;
-	   float planeDistanceDelta = max(abs(dot(positionDelta, normalA)), abs(dot(positionDelta, normalB)));
+	   float planeDistanceDelta = dot(positionDelta, normalB);
 	   return planeDistanceDelta; 
 	}
 	
@@ -185,19 +185,19 @@ var filterFS = `
 			}
 			//ES IMPORTANTE QUE AJUSTE LA PLANE DISTANCE EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
 			x/=	offsetLookupDepth(0.0, 0.0);
-			(x>0.007) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
+			(abs(x)>0.007) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
 		}else{
 			float planeDist;
 			//lo de la condicion de profundidad es para evitar grosor extra. Tuve que normalizar antes las distancias por cosas como traingulos que tambien  uso la backface. visible en nyra
-			if (cercanos[0]<cercanos[2])planeDist = planeDistance(offsetLookupPosition(-1.0, 0.0), offsetLookupNormal(-1.0, 0.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
-			if (cercanos[0]<cercanos[1])planeDist += planeDistance(offsetLookupPosition(1.0, 0.0), offsetLookupNormal(1.0, 0.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
-			if (cercanos[0]<cercanos[4])planeDist += planeDistance(offsetLookupPosition(0.0, -1.0), offsetLookupNormal(0.0, -1.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
-			if (cercanos[0]<cercanos[3])planeDist += planeDistance(offsetLookupPosition(0.0, 1.0), offsetLookupNormal(0.0, 1.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
+			planeDist = planeDistance(offsetLookupPosition(-1.0, 0.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
+			planeDist += planeDistance(offsetLookupPosition(1.0, 0.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
+			planeDist += planeDistance(offsetLookupPosition(0.0, -1.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
+			planeDist += planeDistance(offsetLookupPosition(0.0, 1.0), offsetLookupPosition(0.0, 0.0), offsetLookupNormal(0.0, 0.0)); 
 		
 			//ES IMPORTANTE QUE AJUSTE LA PLANE DISTANCE EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
 			planeDist/=	offsetLookupDepth(0.0, 0.0);
 				
-			(planeDist>0.004) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
+			(abs(planeDist)>0.003) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
 		}
 			
 	

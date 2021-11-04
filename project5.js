@@ -500,7 +500,16 @@ function SetShininess( param )
 function SetThickness( param )
 {
 	var value = param.value;
-	var s = value*2-1;
+	if (value==1)
+	{
+		var s = "fino";
+	}else if (value==2)
+	{
+		var s = "medio";
+	}else{
+		var s = "grueso";
+	}
+	
 	document.getElementById('border-thickness-value').innerText = s;
 	DrawScene();
 }
