@@ -290,6 +290,8 @@ var meshFS = `
 		vec4 Ka = Kd * 0.25;
 
 		vec3 normalVector = normalize(mn * normCoord);
+		if (normalVector.z>0.0) normalVector=-normalVector; 
+		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
 		vec3 h = normalize(lightDir + normalize(vertCoord.xyz));
 		float cos_w = pow(max(0.0,dot(normalVector, h)),shininess);
