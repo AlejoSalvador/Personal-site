@@ -16,7 +16,7 @@ function InitWebGL()
 	// Inicializamos el canvas WebGL
 	canvas = document.getElementById("canvas");
 	canvas.oncontextmenu = function() {return false;};
-	gl = canvas.getContext("webgl", {antialias: false, depth: true});	
+	gl = canvas.getContext("webgl", {antialias: false, depth: true, alpha: false});	
 	if (!gl) 
 	{
 		alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
@@ -157,8 +157,8 @@ function DrawScene()
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 	
 	if (edgeShow.checked||paperShow.checked||pencilShow.checked ){
-	gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[0].framebuffer);     //aca guardo en el buffer si y solo si necesito postprocesar
-	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+		gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[0].framebuffer);     //aca guardo en el buffer si y solo si necesito postprocesar
+		gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 	}
 	// 3. Le pedimos a cada objeto que se dibuje a si mismo
 	var nrmTrans = [ mv[0],mv[1],mv[2], mv[4],mv[5],mv[6], mv[8],mv[9],mv[10] ];
@@ -182,20 +182,13 @@ function DrawScene()
 		gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );                            									  //calcula linea del borde
 		filter.draw(frameBufferArray[0].frameTexture, frameBufferArray[0].depthBuffer,transZ, planes.checked, frameBufferArray[6].frameTexture, perspectiveMatrix[0], perspectiveMatrix[5]);
 		lastBuffer++;
-		if (document.getElementById('border-exp').value>1)
-		{
+		for (var iter= 2; iter<=document.getElementById('border-exp').value;iter++){
 			gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[lastBuffer+1].framebuffer);
 			gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );                 												  //cada pasada ensancha linea
 			lineWide.draw(frameBufferArray[lastBuffer].frameTexture);
 			lastBuffer++;
 		}
-		if (document.getElementById('border-exp').value==3)
-		{
-			gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[lastBuffer+1].framebuffer);
-			gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );                 												  //cada pasada ensancha linea
-			lineWide.draw(frameBufferArray[lastBuffer].frameTexture);
-			lastBuffer++;
-		}
+		
 		if (paperShow.checked||pencilShow.checked )
 			{gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[lastBuffer+1].framebuffer);}
 		else {gl.bindFramebuffer(gl.FRAMEBUFFER, null);}
@@ -213,7 +206,7 @@ function DrawScene()
 			{gl.bindFramebuffer(gl.FRAMEBUFFER, null);}
 		gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );                                                                    //Aplica textura de papel
 		paperTexture.draw(frameBufferArray[lastBuffer].frameTexture, frameBufferArray[6].frameTexture);
-		lastBuffer+=1;
+		lastBuffer++;
 	}
 	
 	if (pencilShow.checked ){	
