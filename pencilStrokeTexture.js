@@ -214,9 +214,10 @@ var pencilFS = `
 		vec4 h;
 		
 		(shadows.w<0.6)?(h=vec4(transparency*originalColor*(1.2*LookupPencil()-1.0)+originalColor)):(h=originalColor); // estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
+		//busco que se mantenga el color promedio del area antes de esta operacion
 		//es una multiplicacion alpha reordenada por rendimimiento
 		
-		if (shadows.w<0.3) h=vec4(transparency*h*(1.8*LookupShadowPencil()-1.0)+h);
+		if (shadows.w<0.3) h=vec4(transparency*h*(1.7*LookupShadowPencil()-1.0)+h);// estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
 		//es una multiplicacion alpha reordenada por rendimimiento
 		
 		gl_FragColor = vec4(h.xyz,1.0);

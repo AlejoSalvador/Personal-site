@@ -273,13 +273,18 @@ var meshFS = `
 
 	vec4 textureColor()
 	{
+		
 		if (boolTexture==1 && loadedTexture==1) //ambos son uniform
 		{
-			return texture2D(texGPU,texCoord);
+			vec4 itexture;
+			itexture=texture2D(texGPU,texCoord);
+			return pow(itexture, vec4(2.2));
 		}else
 		{
-			return vec4( 0.5, 0.5, 0.5, 1 );
+			return vec4( 0.3, 0.3, 0.3, 1 );
 		}
+		
+		
 	}
 	
 	void main()
@@ -303,8 +308,8 @@ var meshFS = `
 			vec4 specular;
 			if (celShadingEnabled==1) //es uniform
 			{
-				diffuse = floor(cos_theta * steps+0.5) / steps * Kd ;
-				specular = floor( cos_w * steps+0.5) / steps * Ks;
+				diffuse = floor(cos_theta * steps+0.9) / steps * Kd ;    //de esta manera con steps en 1 muy rapidamente adquiere colores. con otros steps lo hara mas rapido lo cual tiene sentido al tener mas variedad de colores.
+				specular = floor( cos_w * steps+0.9) / steps * Ks;
 			}else
 			{
 				diffuse = Kd * cos_theta;
@@ -312,14 +317,21 @@ var meshFS = `
 			}
 		
 			vec4 ambient = Ka;
-			gl_FragColor = lightColor * (diffuse + specular +ambient) ; //diffuse + specular
-			
-			if(cos_theta == 0.0) gl_FragColor = ambient;
+			vec4 HDRcolor = lightColor * (diffuse + specular +ambient); //diffuse + speculary 
+			vec4 mapped= HDRcolor/ (HDRcolor + vec4(1.0))*1.8;
+//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25.
+//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping
+//es 1.8 porque es 1/(1.25/2.25)
+
+			gl_FragColor= pow(mapped, vec4(1.0 / 2.2)); //hago una gamma correction
+			//ambos procedimientos se hicieorn aca para evitar tener que trabajar con framebuffers que permitan trabajar con HDR sin linear mapping ni tenes que hacer una gamma corection a posterior
+
+
 
 			gl_FragColor.w = 1.0;
 		}else //if (shadowMode==1)
 		{
-			if (floor(cos_theta * steps+0.5)<0.5)
+			if (floor(cos_theta * steps+0.9)<0.1)
 			{
 				gl_FragColor =vec4((normalVector+1.0)*0.5, 0.0);
 			}else
