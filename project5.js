@@ -16,7 +16,7 @@ function InitWebGL()
 	// Inicializamos el canvas WebGL
 	canvas = document.getElementById("canvas");
 	canvas.oncontextmenu = function() {return false;};
-	gl = canvas.getContext("webgl", {antialias: false, depth: true, alpha: false});	
+	gl = canvas.getContext("webgl", {antialias: false, depth: true});	
 	if (!gl) 
 	{
 		alert("Imposible inicializar WebGL. Tu navegador quizás no lo soporte.");
@@ -180,7 +180,7 @@ function DrawScene()
 	if (edgeShow.checked){
 		gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[lastBuffer+1].framebuffer);
 		gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );                            									  //calcula linea del borde
-		filter.draw(frameBufferArray[0].frameTexture, frameBufferArray[0].depthBuffer,transZ, planes.checked, frameBufferArray[6].frameTexture, perspectiveMatrix[0], perspectiveMatrix[5]);
+		filter.draw(frameBufferArray[6].depthBuffer,transZ, planes.checked, frameBufferArray[6].frameTexture, perspectiveMatrix[0], perspectiveMatrix[5]);
 		lastBuffer++;
 		for (var iter= 2; iter<=document.getElementById('border-exp').value;iter++){
 			gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[lastBuffer+1].framebuffer);

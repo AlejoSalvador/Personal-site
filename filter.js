@@ -10,8 +10,6 @@ class Filter
 		this.prog   = InitShaderProgram( filterVS, filterFS );
 		gl.useProgram(this.prog);
 		// 2. Obtenemos los IDs de las variables uniformes en los shaders e indicamos de que texture obtienen la informacion
-		this.sampler = gl.getUniformLocation(this.prog, 'texScreen');
-		gl.uniform1i (this.sampler,2);
 		this.samplerDepth = gl.getUniformLocation(this.prog, 'texDepth');
 		gl.uniform1i (this.samplerDepth,3);
 		this.samplerNormals = gl.getUniformLocation(this.prog, 'texNormals');
@@ -43,7 +41,7 @@ class Filter
 	}
 
 	
-	draw(colorBuffer,depthBuffer,transZ, borderDetectionMode,  normalBuffer,transformX, transformY)
+	draw(depthBuffer,transZ, borderDetectionMode,  normalBuffer,transformX, transformY)
 	{
 		// [COMPLETAR] Completar con lo necesario para dibujar la colección de triángulos en WebGL
 		
@@ -66,8 +64,6 @@ class Filter
 
 		//configuramos la textura
 
-		gl.activeTexture(gl.TEXTURE2);
-		gl.bindTexture(gl.TEXTURE_2D, colorBuffer);
 		
 		gl.activeTexture(gl.TEXTURE3);
 		gl.bindTexture(gl.TEXTURE_2D, depthBuffer);
@@ -109,7 +105,6 @@ var filterVS = `
 
 var filterFS = `
 	precision mediump float;
-	uniform sampler2D texScreen;
 	uniform sampler2D texDepth;
 	uniform sampler2D texNormals;
 	uniform vec2 uInverseTextureSize;
@@ -147,9 +142,6 @@ var filterFS = `
 	   return planeDistanceDelta; 
 	}
 	
-	
-	vec4 offsetLookupColor(float xOff, float yOff) { 
-		return texture2D(texScreen, vec2(vTextureCoord.x + xOff*uInverseTextureSize.x, vTextureCoord.y + yOff*uInverseTextureSize.y));}
 		
 	float offsetLookupDepth(float xOff, float yOff) { 
 		return linearizeDepth(texture2D(texDepth, vec2(vTextureCoord.x + xOff*uInverseTextureSize.x, vTextureCoord.y + yOff*uInverseTextureSize.y)).x);}

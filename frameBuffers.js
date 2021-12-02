@@ -8,7 +8,7 @@ class FrameBuffers
 		//5.SETTING UP FRAME BUFFER
 		var width = canvas.width;
 		var height = canvas.height;
-		gl.activeTexture(gl.TEXTURE2);
+		gl.activeTexture(gl.TEXTURE1);
 		//1. Init Color Texture
 		this.frameTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, this.frameTexture);
@@ -46,7 +46,7 @@ class FrameBuffers
 		var width = canvas.width;
 		var height = canvas.height;
 		//1. Updating Color Texture
-		gl.activeTexture(gl.TEXTURE2);
+		gl.activeTexture(gl.TEXTURE1);
 		
 		gl.bindTexture(gl.TEXTURE_2D, this.frameTexture);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); //resize for new width and height

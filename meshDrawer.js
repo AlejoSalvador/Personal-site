@@ -144,6 +144,9 @@ class MeshDrawer
 		
 		gl.drawArrays( gl.TRIANGLES, 0, this.numTriangles * 3 );
 		
+		gl.disableVertexAttribArray(this.colorValue);
+		gl.disableVertexAttribArray( this.normalsValue);
+		
 		
 	}
 	
@@ -295,7 +298,7 @@ var meshFS = `
 		vec4 Ka = Kd * 0.25;
 
 		vec3 normalVector = normalize(mn * normCoord);
-		if (normalVector.z>0.0) normalVector=-normalVector; 
+		normalVector= (normalVector.z>0.0)? -normalVector : normalVector; 
 		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
 		vec3 h = normalize(lightDir + normalize(vertCoord.xyz));
@@ -309,7 +312,7 @@ var meshFS = `
 			if (celShadingEnabled==1) //es uniform
 			{
 				diffuse = floor(cos_theta * steps+0.9) / steps * Kd ;    //de esta manera con steps en 1 muy rapidamente adquiere colores. con otros steps lo hara mas rapido lo cual tiene sentido al tener mas variedad de colores.
-				specular = floor( cos_w * steps+0.9) / steps * Ks;
+				specular = floor( cos_w * steps+0.6) / steps * Ks;//lo hago mas bajo en el specula porque no quiero que sea tan sensible
 			}else
 			{
 				diffuse = Kd * cos_theta;
@@ -319,9 +322,9 @@ var meshFS = `
 			vec4 ambient = Ka;
 			vec4 HDRcolor = lightColor * (diffuse + specular +ambient); //diffuse + speculary 
 			vec4 mapped= HDRcolor/ (HDRcolor + vec4(1.0))*1.8;
-//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25.
-//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping
-//es 1.8 porque es 1/(1.25/2.25)
+			//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25.
+			//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping
+			//es 1.8 porque es 1/(1.25/2.25)
 
 			gl_FragColor= pow(mapped, vec4(1.0 / 2.2)); //hago una gamma correction
 			//ambos procedimientos se hicieorn aca para evitar tener que trabajar con framebuffers que permitan trabajar con HDR sin linear mapping ni tenes que hacer una gamma corection a posterior
@@ -331,13 +334,7 @@ var meshFS = `
 			gl_FragColor.w = 1.0;
 		}else //if (shadowMode==1)
 		{
-			if (floor(cos_theta * steps+0.9)<0.1)
-			{
-				gl_FragColor =vec4((normalVector+1.0)*0.5, 0.0);
-			}else
-			{
-				gl_FragColor =vec4((normalVector+1.0)*0.5, 0.5);   //los clear color son 1 por default
-			}
+			gl_FragColor = (floor(cos_theta * steps+0.9)<0.1)? vec4((normalVector+1.0)*0.5, 0.0):vec4((normalVector+1.0)*0.5, 0.5);//los clear color son 1 por default
 		}
 	}
 `;

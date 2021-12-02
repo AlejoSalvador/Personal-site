@@ -60,7 +60,7 @@ class PencilStroke
 	handlePencilTextureLoaded(img){
 		gl.useProgram( this.prog );
 		this.pencilTexture = gl.createTexture();
-			gl.activeTexture(gl.TEXTURE4);
+			gl.activeTexture(gl.TEXTURE1);
 		gl.bindTexture(gl.TEXTURE_2D, this.pencilTexture);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -80,7 +80,7 @@ class PencilStroke
 	handleShadowTextureLoaded(img){
 		gl.useProgram( this.prog );
 		this.shadowTexture = gl.createTexture();
-			gl.activeTexture(gl.TEXTURE12);
+			gl.activeTexture(gl.TEXTURE1);
 		gl.bindTexture(gl.TEXTURE_2D, this.shadowTexture);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -95,7 +95,7 @@ class PencilStroke
 				img
 			     );
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); 
-			gl.activeTexture(gl.TEXTURE0);
+		gl.activeTexture(gl.TEXTURE0);
 	}
 	
 	changeTransparency(transparencyLevel){
@@ -187,11 +187,8 @@ var pencilFS = `
 
 	float linearizeDepth(float depth)
 	{
-		
-		 float n = near;
-		 float f = far;
 		 float z = depth * 2.0 - 1.0; 
-		 return (2.0 * n*f) / (f + n - z * (f - n));  
+		 return (2.0 * near*far) / (far + near - z * (far - near));  
 	}
 			
 	vec4 LookupPencil() { 
@@ -205,19 +202,19 @@ var pencilFS = `
 	
 		vec4 originalColor=texture2D(texScreen, vTextureCoord);
 
-		if (near < minn)
-			{near = minn;}
+		near = (near < minn)? minn : near;
+		
 		
 		linearDepth=linearizeDepth(texture2D(texDepth, vTextureCoord).x);
 		vec4 shadows=texture2D(texShadows, vTextureCoord);
 	
 		vec4 h;
 		
-		(shadows.w<0.6)?(h=vec4(transparency*originalColor*(1.2*LookupPencil()-1.0)+originalColor)):(h=originalColor); // estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
+		h=(shadows.w<0.6)?(vec4(transparency*originalColor*(1.2*LookupPencil()-1.0)+originalColor)):(originalColor); // estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
 		//busco que se mantenga el color promedio del area antes de esta operacion
 		//es una multiplicacion alpha reordenada por rendimimiento
 		
-		if (shadows.w<0.3) h=vec4(transparency*h*(1.7*LookupShadowPencil()-1.0)+h);// estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
+		h=(shadows.w<0.3)? vec4(transparency*h*(1.7*LookupShadowPencil()-1.0)+h):h;// estoy subiendo la iluminacion para compensar lo que bajo en la multiplicación.
 		//es una multiplicacion alpha reordenada por rendimimiento
 		
 		gl_FragColor = vec4(h.xyz,1.0);
