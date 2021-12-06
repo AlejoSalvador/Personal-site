@@ -169,7 +169,7 @@ function DrawScene()
 	}
 
 	var lastBuffer=0;
-	if (paperShow.checked||pencilShow.checked  || planes.checked){
+	if (edgeShow.checked||paperShow.checked||pencilShow.checked){
 		gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferArray[6].framebuffer); //para que no interfiera con los buffers
 		gl.clearColor(0.5,0.5,-1,1);//inicializa las normales para que la normal del fondo sea perpendicular al mismo
 		gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );

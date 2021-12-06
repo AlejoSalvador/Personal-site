@@ -242,7 +242,7 @@ var meshVS = `
 	{ 	
 		texCoord = color;
 		normCoord = (swapM *vec4(normals,1)).xyz; //debo cambiar la orientacion de las normales si rote el modelo para que sigan teniendo sentido
-		vertCoord = -mv * vec4(pos,1);
+		vertCoord = -mv * swapM* vec4(pos,1);  //al rotar debo poner las coordenadas correctas del modelo sin perspectiva
 		gl_Position = mvp * swapM * vec4(pos,1);
 	}
 `;
@@ -298,15 +298,16 @@ var meshFS = `
 		vec4 Ka = Kd * 0.25;
 
 		vec3 normalVector = normalize(mn * normCoord);
-		normalVector= (normalVector.z>0.0)? -normalVector : normalVector; 
+		normalVector= (dot(normalVector,normalize(vertCoord.xyz))<-0.1)? -normalVector : normalVector; //simplemente da vuelta las cosas que desde el angulo de vision estan dadas vueltas
 		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
+		//tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
-		vec3 h = normalize(lightDir + normalize(vertCoord.xyz));
-		float cos_w = pow(max(0.0,dot(normalVector, h)),shininess);
 		float steps = CelShadingLevel;
-	
+		
 		if (shadowMode==0) //al ser un uniform deberia andar rapido
 		{
+			vec3 h = normalize(lightDir + normalize(vertCoord.xyz));
+			float cos_w = pow(max(0.0,dot(normalVector, h)),shininess);
 			vec4 diffuse;
 			vec4 specular;
 			if (celShadingEnabled==1) //es uniform
