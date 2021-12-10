@@ -298,9 +298,10 @@ var meshFS = `
 		vec4 Ka = Kd * 0.25;
 
 		vec3 normalVector = normalize(mn * normCoord);
-		normalVector= (dot(normalVector,normalize(vertCoord.xyz))<-0.1)? -normalVector : normalVector; //simplemente da vuelta las cosas que desde el angulo de vision estan dadas vueltas
+		normalVector= (gl_FrontFacing)? -normalVector : normalVector; //simplemente da vuelta las cosas que desde el angulo de vision estan dadas vueltas
 		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
-		//tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
+		normalVector= (dot(normalVector,normalize(vertCoord.xyz))<-0.15)? -normalVector : normalVector; //Alternativa sin gl_FrontFacing. tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
+		//la segunda alternativa corre siempre para solucionar casos con los que me cruce en los que por algun motivo esta mal el winding en algunas partes.
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
 		float steps = CelShadingLevel;
 		
