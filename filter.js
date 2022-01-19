@@ -189,10 +189,12 @@ var filterFS = `
 			//ES IMPORTANTE QUE AJUSTE LA PLANE DISTANCE EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
 			planeDist/=	offsetLookupDepth(0.0, 0.0);
 				
-			(abs(planeDist)>0.003) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
+			gl_FragColor = (abs(planeDist)>0.007) ? (vec4( 0.0, 0.0, 0.0, 1.0 )):(vec4( 1.0, 1.0, 1.0, 1.0 ));
 		}
+		
+		
 			
-	
+		
 	}
 	
 	

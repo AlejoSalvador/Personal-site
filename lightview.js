@@ -146,6 +146,15 @@ class LightView
 		var cx = Math.cos( this.rotX );
 		var sx = Math.sin( this.rotX );
 		meshDrawer.setLightDir( -sy, cy*sx, -cy*cx );
+		
+		
+		// Compute the camera's matrix using look at.
+		  var cameraMatrix = lookAt(normalize([sy, -cy*sx, cy*cx]), [0,0,0], [0,1,0]);
+		 
+		  // Make a view matrix from the camera matrix.
+		  lookAtLight = inverse(cameraMatrix);
+		
+		
 		DrawScene();
 	}
 	

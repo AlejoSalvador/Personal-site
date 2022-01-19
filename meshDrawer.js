@@ -1,12 +1,12 @@
 
 
-// [COMPLETAR] Completar la implementación de esta clase.
+//Completar la implementación de esta clase.
 class MeshDrawer
 {
 	// El constructor es donde nos encargamos de realizar las inicializaciones necesarias. 
 	constructor()
 	{
-		// [COMPLETAR] inicializaciones
+		// inicializaciones
 
 		// 1. Compilamos el programa de shaders
 		this.prog   = InitShaderProgram( meshVS, meshFS );
@@ -14,6 +14,7 @@ class MeshDrawer
 		this.mv =  gl.getUniformLocation( this.prog, 'mv' );
 		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
 		this.mn = gl.getUniformLocation( this.prog, 'mn' );
+		this.lightMVP = gl.getUniformLocation( this.prog, 'lightMVP' );
 		this.swapM = gl.getUniformLocation( this.prog, 'swapM' );
 		this.loadedTexture = gl.getUniformLocation( this.prog, 'loadedTexture' );
 		this.celShadingEnabled = gl.getUniformLocation( this.prog, 'celShadingEnabled' );
@@ -39,8 +40,10 @@ class MeshDrawer
 		gl.uniform1i (sampler,0);
 		gl.uniform1i(this.loadedTexture, 0);
 		
+		this.shadowMap = gl.getUniformLocation(this.prog, 'shadowMap');
+		gl.uniform1i (this.shadowMap,1);
+		
 	}
-	//se llama para modificar tamaño del framebuffer al modificar el del canvas
 	
 	
 	//activar o desactivar celShading
@@ -67,7 +70,7 @@ class MeshDrawer
 	// consecutivos y se  asocian a cada vértice en orden. 
 	setMesh( vertPos, texCoords, normals )
 	{
-		// [COMPLETAR] Actualizar el contenido del buffer de vértices y otros atributos..
+		//  Actualizar el contenido del buffer de vértices y otros atributos..
 		this.numTriangles = vertPos.length / 3 / 3;
 		gl.useProgram(this.prog);
 		// 1. Binding y seteo del buffer de vértices
@@ -87,7 +90,7 @@ class MeshDrawer
 	// El argumento es un boleano que indica si el checkbox está tildado
 	swapYZ( swap )
 	{
-		// [COMPLETAR] Setear variables uniformes en el vertex shader
+		//  Setear variables uniformes en el vertex shader
 		var trans;
 		if (swap==true){ 
 			trans= [
@@ -115,9 +118,9 @@ class MeshDrawer
 	// normales (matrixNormal) que es la inversa transpuesta de matrixMV
 	//el modo dice si dibuja colores o marca areas sombreas
 	//el mode 1 es decir ShadowMode guarda las areas sombreadas en W y aprovechara x,y, z para que en el mismo llamado se devuelva las normales en el fragmento
-	draw( matrixMVP, matrixMV, matrixNormal, mode ) 
+	draw( matrixMVP, matrixMV, matrixNormal, lightMVP, shadowMapTexture , mode) 
 	{
-		// [COMPLETAR] Completar con lo necesario para dibujar la colección de triángulos en WebGL
+		//dibujar la colección de triángulos en WebGL
 		
 		// 1. Seleccionamos el shader
 		gl.useProgram( this.prog );
@@ -125,6 +128,7 @@ class MeshDrawer
 		gl.uniformMatrix4fv( this.mvp, false, matrixMVP );
 		gl.uniformMatrix4fv( this.mv, false, matrixMV );
 		gl.uniformMatrix3fv( this.mn, false, matrixNormal );
+		gl.uniformMatrix4fv( this.lightMVP, false, lightMVP );
    		// 3. Habilitar atributos: vértices, normales, texturas
 		gl.bindBuffer( gl.ARRAY_BUFFER, this.positionBuffer );
 		gl.vertexAttribPointer( this.posValue, 3, gl.FLOAT, false, 0, 0 );
@@ -138,6 +142,9 @@ class MeshDrawer
 		gl.vertexAttribPointer( this.normalsValue, 3, gl.FLOAT, false, 0, 0 );
 		gl.enableVertexAttribArray( this.normalsValue);
 
+		//4.setear uniformes y shadowMap
+		gl.activeTexture(gl.TEXTURE1);
+		gl.bindTexture(gl.TEXTURE_2D, shadowMapTexture);
 	
 		gl.uniform1i(this.shadowMode, mode);
 
@@ -154,7 +161,7 @@ class MeshDrawer
 	// El argumento es un componente <img> de html que contiene la textura. 
 	setTexture( img )
 	{
-		// [COMPLETAR] Binding de la textura
+		// Binding de la textura
 		gl.useProgram( this.prog );
 
 		this.textura = gl.createTexture();
@@ -172,7 +179,7 @@ class MeshDrawer
 			     );
 		gl.generateMipmap(gl.TEXTURE_2D);
 
-		// [COMPLETAR] Ahora que la textura ya está seteada, debemos setear 
+		// Ahora que la textura ya está seteada, debemos setear 
 		// parámetros uniformes en el fragment shader para que pueda usarla. 
 		gl.uniform1i(this.loadedTexture, 1);
 	}
@@ -189,7 +196,7 @@ class MeshDrawer
 	// Este método se llama al actualizar la dirección de la luz desde la interfaz
 	setLightDir( x, y, z )
 	{		
-		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar la dirección de la luz
+		// Setear variables uniformes en el fragment shader para especificar la dirección de la luz
 		gl.useProgram( this.prog );
 		gl.uniform3fv(this.lightDirection, [x,y,z]);
 	}
@@ -197,7 +204,7 @@ class MeshDrawer
 	// Este método se llama al actualizar el brillo del material 
 	setShininess( shininess )
 	{		
-		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar el brillo.
+		// Setear variables uniformes en el fragment shader para especificar el brillo.
 		gl.useProgram( this.prog );
 		gl.uniform1f(this.shininess, shininess);
 
@@ -205,7 +212,7 @@ class MeshDrawer
 	
 	setCelShadingLevel( level )
 	{		
-		// [COMPLETAR] Setear variables uniformes en el fragment shader para especificar el brillo.
+		// Setear variables uniformes en el fragment shader para especificar nivel de cel shading.
 		gl.useProgram( this.prog );
 		gl.uniform1f(this.CelShadingLevel, level);
 
@@ -232,17 +239,26 @@ var meshVS = `
 
 	uniform mat4 mvp;
 	uniform mat4 mv;
+	uniform mat4 lightMVP;
 	uniform mat4 swapM;
 
 	varying vec2 texCoord;
 	varying vec3 normCoord;
 	varying vec4 vertCoord;
+	varying vec4 lightSpaceFragPos;
 
 	void main()
 	{ 	
 		texCoord = color;
 		normCoord = (swapM *vec4(normals,1)).xyz; //debo cambiar la orientacion de las normales si rote el modelo para que sigan teniendo sentido
 		vertCoord = -mv * swapM* vec4(pos,1);  //al rotar debo poner las coordenadas correctas del modelo sin perspectiva
+		
+		//fragment position from light perspective. Done here instead of in the fragment to reduce calculations
+		lightSpaceFragPos = lightMVP * swapM * vec4(pos,1);
+		// perform perspective divide
+		vec3 lightSpaceFrag = lightSpaceFragPos.xyz / lightSpaceFragPos.w;
+		// transform to [0,1] range
+		lightSpaceFragPos = vec4(lightSpaceFrag * 0.5 + 0.5, 1.0);
 		gl_Position = mvp * swapM * vec4(pos,1);
 	}
 `;
@@ -263,6 +279,7 @@ var meshFS = `
 	uniform int celShadingEnabled;
 	uniform int shadowMode;
 	uniform sampler2D texGPU;
+	uniform sampler2D  shadowMap;
 	uniform vec3 lightDir;
 	uniform float shininess;
 	
@@ -273,6 +290,7 @@ var meshFS = `
 	varying vec2 texCoord;
 	varying vec3 normCoord;
 	varying vec4 vertCoord;
+	varying vec4 lightSpaceFragPos;
 
 	vec4 textureColor()
 	{
@@ -290,6 +308,24 @@ var meshFS = `
 		
 	}
 	
+	float  ShadowCalculation(vec4 projCoords, vec3 normalVector)
+	{
+	
+		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+		float closestDepth = texture2D(shadowMap, projCoords.xy).x; 
+		// get depth of current fragment from light's perspective
+		float currentDepth = projCoords.z;
+		//get a bias to prevent shadow acne
+		float bias = max(0.01 * (1.0 - dot(normalVector, lightDir)), 0.001); 		
+		// check whether current frag pos is in shadow
+		float shadow = currentDepth-bias > closestDepth  ? 1.0 : 0.0;
+		
+		
+
+		return shadow;
+		
+	}
+	
 	void main()
 	{
 		vec4 lightColor = vec4(1, 1, 1, 1);
@@ -298,12 +334,14 @@ var meshFS = `
 		vec4 Ka = Kd * 0.25;
 
 		vec3 normalVector = normalize(mn * normCoord);
+		float shadow = ShadowCalculation(lightSpaceFragPos,normalVector); 
 		normalVector= (gl_FrontFacing)? -normalVector : normalVector; //simplemente da vuelta las cosas que desde el angulo de vision estan dadas vueltas
 		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
 		normalVector= (dot(normalVector,normalize(vertCoord.xyz))<-0.15)? -normalVector : normalVector; //Alternativa sin gl_FrontFacing. tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
 		//la segunda alternativa corre siempre para solucionar casos con los que me cruce en los que por algun motivo esta mal el winding en algunas partes.
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
 		float steps = CelShadingLevel;
+		
 		
 		if (shadowMode==0) //al ser un uniform deberia andar rapido
 		{
@@ -313,12 +351,12 @@ var meshFS = `
 			vec4 specular;
 			if (celShadingEnabled==1) //es uniform
 			{
-				diffuse = floor(cos_theta * steps+0.9) / steps * Kd ;    //de esta manera con steps en 1 muy rapidamente adquiere colores. con otros steps lo hara mas rapido lo cual tiene sentido al tener mas variedad de colores.
-				specular = floor( cos_w * steps+0.6) / steps * Ks;//lo hago mas bajo en el specula porque no quiero que sea tan sensible
+				diffuse = floor(cos_theta * (1.0-shadow)* steps+0.9) / steps * Kd ;    //de esta manera con steps en 1 muy rapidamente adquiere colores. con otros steps lo hara mas rapido lo cual tiene sentido al tener mas variedad de colores.
+				specular = floor( cos_w * (1.0-shadow) * steps+0.6) / steps * Ks;//lo hago mas bajo en el specula porque no quiero que sea tan sensible
 			}else
 			{
-				diffuse = Kd * cos_theta;
-				specular = Ks * cos_w;
+				diffuse = Kd * cos_theta * (1.0-shadow);
+				specular = Ks * cos_w * (1.0-shadow);
 			}
 		
 			vec4 ambient = Ka;
@@ -334,9 +372,13 @@ var meshFS = `
 
 
 			gl_FragColor.w = 1.0;
+			
+			
 		}else //if (shadowMode==1)
 		{
-			gl_FragColor = (floor(cos_theta * steps+0.9)<0.1)? vec4((normalVector+1.0)*0.5, 0.0):vec4((normalVector+1.0)*0.5, 0.5);//los clear color son 1 por default
+			gl_FragColor = (floor(cos_theta * (1.0-shadow) * steps+0.9)<0.1)? vec4((normalVector+1.0)*0.5, 0.0):vec4((normalVector+1.0)*0.5, 0.5);//los clear color son 1 por default
 		}
+		
+		
 	}
 `;
