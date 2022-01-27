@@ -22,6 +22,7 @@ class MeshDrawer
 		this.lightDirection = gl.getUniformLocation( this.prog, 'lightDir' );
 		this.shininess = gl.getUniformLocation( this.prog, 'shininess' );
 		this.CelShadingLevel = gl.getUniformLocation( this.prog, 'CelShadingLevel' );
+		this.RimLightTreshold = gl.getUniformLocation( this.prog, 'RimLightTreshold' );
 		this.shadowMode = gl.getUniformLocation( this.prog, 'shadowMode' ); //si esta seteado en 0 dibuja colores. Si esta en 1 marca areas en sombra
 		
 		// 3. Obtenemos los IDs de los atributos de los vértices en los shaders
@@ -218,6 +219,14 @@ class MeshDrawer
 
 	}
 	
+	SetRimLightTreshold( level )
+	{		
+		// Setear variables uniformes en el fragment shader para especificar nivel de cel shading.
+		gl.useProgram( this.prog );
+		gl.uniform1f(this.RimLightTreshold, level);
+
+	}
+	
 }
 
 
@@ -251,7 +260,7 @@ var meshVS = `
 	{ 	
 		texCoord = color;
 		normCoord = (swapM *vec4(normals,1)).xyz; //debo cambiar la orientacion de las normales si rote el modelo para que sigan teniendo sentido
-		vertCoord = -mv * swapM* vec4(pos,1);  //al rotar debo poner las coordenadas correctas del modelo sin perspectiva
+		vertCoord = normalize(-mv * swapM* vec4(pos,1));  //al rotar debo poner las coordenadas correctas del modelo sin perspectiva. normalizo porque se usa normalizado en fragment shader
 		
 		//fragment position from light perspective. Done here instead of in the fragment to reduce calculations
 		lightSpaceFragPos = lightMVP * swapM * vec4(pos,1);
@@ -284,6 +293,7 @@ var meshFS = `
 	uniform float shininess;
 	
 	uniform float CelShadingLevel;
+	uniform float RimLightTreshold;
 	
 
 
@@ -328,6 +338,7 @@ var meshFS = `
 	
 	void main()
 	{
+		
 		vec4 lightColor = vec4(1, 1, 1, 1);
 		vec4 Kd = textureColor();
 		vec4 Ks = vec4(1, 1, 1, 1);
@@ -337,7 +348,7 @@ var meshFS = `
 		float shadow = ShadowCalculation(lightSpaceFragPos,normalVector); 
 		normalVector= (gl_FrontFacing)? -normalVector : normalVector; //simplemente da vuelta las cosas que desde el angulo de vision estan dadas vueltas
 		//Esto es un pequeño truco para que las caras que cuando las normales se usan a ambos lados se den vuelta si las estoy mirando del otro lado. no tiene sentido ver normales para el otro lado
-		normalVector= (dot(normalVector,normalize(vertCoord.xyz))<-0.15)? -normalVector : normalVector; //Alternativa sin gl_FrontFacing. tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
+		normalVector= (dot(normalVector,vertCoord.xyz)<-0.15)? -normalVector : normalVector; //Alternativa sin gl_FrontFacing. tiene un treshold por el tema de que a veces hay errores en los bordes debido a errores en el calculo de normales y prefiero tener errores en la cara de atras que en todo el resto
 		//la segunda alternativa corre siempre para solucionar casos con los que me cruce en los que por algun motivo esta mal el winding en algunas partes.
 		float cos_theta = max(0.0,dot(normalVector, lightDir));
 		float steps = CelShadingLevel;
@@ -345,25 +356,29 @@ var meshFS = `
 		
 		if (shadowMode==0) //al ser un uniform deberia andar rapido
 		{
-			vec3 h = normalize(lightDir + normalize(vertCoord.xyz));
+			vec3 h = normalize(lightDir + vertCoord.xyz);
 			float cos_w = pow(max(0.0,dot(normalVector, h)),shininess);
 			vec4 diffuse;
 			vec4 specular;
+			float rimIntensity = (1.0 - dot(normalVector, vertCoord.xyz)); //intensity of rim lighting.
 			if (celShadingEnabled==1) //es uniform
 			{
 				diffuse = floor(cos_theta * (1.0-shadow)* steps+0.9) / steps * Kd ;    //de esta manera con steps en 1 muy rapidamente adquiere colores. con otros steps lo hara mas rapido lo cual tiene sentido al tener mas variedad de colores.
 				specular = floor( cos_w * (1.0-shadow) * steps+0.6) / steps * Ks;//lo hago mas bajo en el specula porque no quiero que sea tan sensible
+				rimIntensity=smoothstep(RimLightTreshold, RimLightTreshold * 1.1, rimIntensity);
 			}else
 			{
 				diffuse = Kd * cos_theta * (1.0-shadow);
 				specular = Ks * cos_w * (1.0-shadow);
 			}
-		
+			
+			vec4 rim=rimIntensity*diffuse;
+			
 			vec4 ambient = Ka;
-			vec4 HDRcolor = lightColor * (diffuse + specular +ambient); //diffuse + speculary 
+			vec4 HDRcolor = lightColor * (diffuse + specular +ambient+rim); //diffuse + specular+ambient+rim 
 			vec4 mapped= HDRcolor/ (HDRcolor + vec4(1.0))*1.8;
-			//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25.
-			//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping
+			//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25
+			//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping. Por un motivo similar ignoro la rim light
 			//es 1.8 porque es 1/(1.25/2.25)
 
 			gl_FragColor= pow(mapped, vec4(1.0 / 2.2)); //hago una gamma correction

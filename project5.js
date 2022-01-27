@@ -419,6 +419,7 @@ window.onload = function()
 	SetShininess( document.getElementById('shininess-exp') );
 	SetThickness( document.getElementById('border-exp') );
 	SetCelShadingLevel( document.getElementById('cel-shading-exp') );
+	SetRimLightTreshold( document.getElementById('rim-light-treshold') );
 	SetTransparency( document.getElementById('transparency-exp') );
 	SetPencilIntensity( document.getElementById('pencil-intensity-exp') );
 	ChangeMenu( document.getElementById('menu-select') );
@@ -568,6 +569,15 @@ function SetCelShadingLevel( param )
 	DrawScene();
 }
 
+function SetRimLightTreshold( param )
+{
+	value=param.value;
+	document.getElementById('rim-light-treshold-value').innerText = value;
+	meshDrawer.SetRimLightTreshold(value*0.01);
+	DrawScene();
+}
+
+
 
 function SetTransparency( param )
 {
@@ -610,11 +620,17 @@ function CelShading( param )
 		document.getElementById('cel-shading-label').style.display = "block";
 		document.getElementById('cel-shading-value').style.display = "block";
 		document.getElementById('cel-shading-exp').style.display = "block";
+		document.getElementById('cel-shading-rim-light').style.display = "block";
+		document.getElementById('rim-light-treshold-value').style.display = "block";
+		document.getElementById('rim-light-treshold').style.display = "block";
 	}else
 	{
 		document.getElementById('cel-shading-label').style.display = "none";
 		document.getElementById('cel-shading-value').style.display = "none";
 		document.getElementById('cel-shading-exp').style.display = "none";
+		document.getElementById('cel-shading-rim-light').style.display = "none";
+		document.getElementById('rim-light-treshold-value').style.display = "none";
+		document.getElementById('rim-light-treshold').style.display = "none";
 	}
 	DrawScene();
 }
