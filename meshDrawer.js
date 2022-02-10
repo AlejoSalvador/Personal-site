@@ -376,10 +376,10 @@ var meshFS = `
 			
 			vec4 ambient = Ka;
 			vec4 HDRcolor = lightColor * (diffuse + specular +ambient+rim); //diffuse + specular+ambient+rim 
-			vec4 mapped= HDRcolor/ (HDRcolor + vec4(1.0))*1.8;
-			//aplico el color mapping de Reinhard para no perder informacion por clamping. Luego hago una multiplicacion ya que se que el color no puede ir mas alla de 1.0+0.25=1.25
+			vec4 mapped= HDRcolor*(1.0+HDRcolor/vec4(1.25*1.25, 1.25*1.25, 1.25*1.25, 1.0))/ (HDRcolor + vec4(1.0));
+			//aplico el color mapping de Reinhard para no perder informacion por clamping. Uso de white points 1.25 ya que se que el color no puede ir mas alla de 1.0+0.25=1.25
 			//ignoro el specular poque intencionalmente es blanco en el area mas central asi que esta bien que se haga el clamping. Por un motivo similar ignoro la rim light
-			//es 1.8 porque es 1/(1.25/2.25)
+			//esta es la version extendida de Reinhard. Es importante aclarar que la division y multiplicaciones entre vectores se hace por componentes
 
 			gl_FragColor= pow(mapped, vec4(1.0 / 2.2)); //hago una gamma correction
 			//ambos procedimientos se hicieorn aca para evitar tener que trabajar con framebuffers que permitan trabajar con HDR sin linear mapping ni tenes que hacer una gamma corection a posterior
