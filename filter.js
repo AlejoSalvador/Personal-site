@@ -171,7 +171,7 @@ var filterFS = `
 			
 			float x=0.0;
 			x=-4.0*cercanos[0];
-			for (int i=1;i<9;i++)
+			for (int i=1;i<=4;i++)
 			{
 				x+=cercanos[i];
 			}
