@@ -175,7 +175,7 @@ var filterFS = `
 			{
 				x+=cercanos[i];
 			}
-			//ES IMPORTANTE QUE AJUSTE LA PLANE DISTANCE EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
+			//ES IMPORTANTE QUE AJUSTE LA DIFERENCIA EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
 			x/=	offsetLookupDepth(0.0, 0.0);
 			(abs(x)>0.007) ? (gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 )):(gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ));
 		}else{
@@ -189,7 +189,7 @@ var filterFS = `
 			//ES IMPORTANTE QUE AJUSTE LA PLANE DISTANCE EN FUNCION DE LA PROFUNDIDAD YA QUE AL ALEJARME LOS PIXELES PASARAN A TENER LA PROFUNIDAD DEL PIXEL ADYACENTE
 			planeDist/=	offsetLookupDepth(0.0, 0.0);
 				
-			gl_FragColor = (abs(planeDist)>0.007) ? (vec4( 0.0, 0.0, 0.0, 1.0 )):(vec4( 1.0, 1.0, 1.0, 1.0 ));
+			gl_FragColor = (abs(planeDist)>0.005) ? (vec4( 0.0, 0.0, 0.0, 1.0 )):(vec4( 1.0, 1.0, 1.0, 1.0 ));
 		}
 		
 		
