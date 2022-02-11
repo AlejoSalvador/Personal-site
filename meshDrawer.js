@@ -370,6 +370,7 @@ var meshFS = `
 			{
 				diffuse = Kd * cos_theta * (1.0-shadow);
 				specular = Ks * cos_w * (1.0-shadow);
+				rimIntensity=pow(rimIntensity, 0.5);
 			}
 			
 			vec4 rim=rimIntensity*diffuse;
@@ -382,8 +383,7 @@ var meshFS = `
 			//esta es la version extendida de Reinhard. Es importante aclarar que la division y multiplicaciones entre vectores se hace por componentes
 
 			gl_FragColor= pow(mapped, vec4(1.0 / 2.2)); //hago una gamma correction
-			//ambos procedimientos se hicieorn aca para evitar tener que trabajar con framebuffers que permitan trabajar con HDR sin linear mapping ni tenes que hacer una gamma corection a posterior
-
+			//ambos procedimientos se hicieron aca para evitar tener que trabajar con framebuffers que permitan trabajar con HDR sin linear mapping ni tenes que hacer una gamma corection a posterior
 
 
 			gl_FragColor.w = 1.0;
