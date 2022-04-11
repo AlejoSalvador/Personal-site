@@ -66,18 +66,18 @@ function InitWebGL()
 	var imag = new Image(); 	
 	imag.crossOrigin = "anonymous";
 	imag.onload = function() { paperTexture.handleTextureLoaded(imag); DrawScene(); }
-	imag.src = "https://i.imgur.com/h1I7FJP.jpg";
+	imag.src = "https://alejosalvador.com/texturasfiltros/ivory-off-white-paper-texture.jpg";
 	
 	
 	var imag2 = new Image(); 	
 	imag2.crossOrigin = "anonymous";
 	imag2.onload = function() { pencilStroke.handlePencilTextureLoaded(imag2); DrawScene(); }
-	imag2.src = "https://i.imgur.com/0ltQdk7.jpg";
+	imag2.src = "https://alejosalvador.com/texturasfiltros/pencil.jpg";
 	
 	var imag3 = new Image(); 	
 	imag3.crossOrigin = "anonymous";
 	imag3.onload = function() { pencilStroke.handleShadowTextureLoaded(imag3); DrawScene(); }
-	imag3.src = "https://i.imgur.com/WphPKUJ.png";
+	imag3.src = "https://alejosalvador.com/texturasfiltros/brushStroke.png";
 	
 	
 	//inicializar correctamente segun las Checkbox
@@ -423,6 +423,8 @@ window.onload = function()
 	SetTransparency( document.getElementById('transparency-exp') );
 	SetPencilIntensity( document.getElementById('pencil-intensity-exp') );
 	ChangeMenu( document.getElementById('menu-select') );
+	//LoadObj( param );
+	//LoadTexture( param );
 	
 	// Dibujo la escena
 	DrawScene();
