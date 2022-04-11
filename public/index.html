@@ -1,0 +1,79 @@
+<doctype html>
+<html>
+<head>
+<title> FCG 2021 - TP5</title>
+
+<!-- estilo-->
+<link href="style.css" rel="stylesheet">
+
+
+
+</head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+<body onresize="WindowResize()">
+    <!-- canvas (WebGL)-->
+    <div id="canvas-div"><canvas id="canvas"></canvas></div><div id="controls-div">
+    <!-- menu y controles-->
+    <div id="controls">
+        <div class="control-group"><canvas id="lightcontrol"></canvas><div id="lightcontrol-label">Light Source</div></div>
+        <div class="control-group">
+            <div class="control"><input id="show-box" name="show-box" type="checkbox" onchange="DrawScene()" checked /><label for="show-box"> Show Box</label></div>
+            <div class="control"><input id="show-texture" name="show-texture" type="checkbox" onchange="ShowTexture(this)" checked /><label for="show-texture"> Show Texture</label></div>
+            <div class="control"><input id="swap-yz" name="swap-yz" type="checkbox" onchange="SwapYZ(this)" /><label for="swap-yz"> Swap Y-Z</label></div>
+            <div class="control"><input id="auto-rotate" name="auto-rotate" type="checkbox" onchange="AutoRotate(this)"/><label for="auto-rotate"> Carrousel</label></div>
+            <div class="control"><input id="rotation-speed" type="range" min="1" max="100" value="50" /></div>
+			<div class="control"><span id="shininess-label">Specular Intensity:</span><span id="shininess-value">1</span><input id="shininess-exp" type="range" min="0" max="100" value="100" oninput="SetShininess(this)"/></div>
+			
+			<div class="control"><input id="show-border" name="show-border" type="checkbox" onchange="ShowBorder( this )" checked /><label for="show-border"> Trace Borders:</label></div>
+			<div class="borderSettings" id="borderSettings">
+				<div class="control"><input id="depth" name="depth" type="checkbox" onchange="BorderDepth( this )" /><label for="depth"> using depth</label></div>
+				<div class="control"><input id="planes" name="planes" type="checkbox" onchange="BorderPlanes( this )" checked /><label for="planes"> using normal planes</label></div>	
+				<div class="control"><span id="border-thickness-label">Border thickness:</span><span id="border-thickness-value">"thin"</span><input id="border-exp" type="range" min="1" max="3" value="1"  oninput="SetThickness(this)"/></div>
+			</div>
+			
+			
+			
+			<div class="control"><input id="cel-shading" name="cel-shading" type="checkbox" onchange="CelShading(this)" checked /><label for="cel-shading"> Cel-shading</label></div>
+			<div class="control"><span id="cel-shading-label">Cel-shading partitions:</span><span id="cel-shading-value">2</span><input id="cel-shading-exp" type="range" min="2" max="5" value="2"  oninput="SetCelShadingLevel(this)"/></div>
+			<div class="control"><span id="cel-shading-rim-light">Rim light treshold:</span><span id="rim-light-treshold-value">70</span><input id="rim-light-treshold" type="range" min="0" max="100" value="70"  oninput="SetRimLightTreshold(this)"/></div>
+			
+			<div class="control"><input id="paper-texture" name="paper-texture" type="checkbox" onchange="SetPaperTexture(this)" checked /><label for="paper-texture"> Paper Texture</label></div>
+			<div class="control"><span id="transparency-label">Color transparency:</span><span id="transparency-value">40</span><input id="transparency-exp" type="range" min="0" max="100" value="40" oninput="SetTransparency(this)"/></div>
+			
+			<div class="control"><input id="pencil-texture" name="pencil-texture" type="checkbox" onchange="SetPencilTexture(this)" checked /><label for="pencil-texture"> Simulate pencil stroke</label></div>
+			<div class="control"><span id="pencil-intensity-label">Intensity of pencil stroke:</span><span id="pencil-intensity-value">30</span><input id="pencil-intensity-exp" type="range" min="0" max="100" value="30" oninput="SetPencilIntensity(this)"/></div>
+            
+        </div>
+        <div class="control-group">
+			<input id="menu-select" name="menu-select" type="checkbox" onchange="ChangeMenu(this)" checked /><label for="menu select"> Menu for loading model</label></div>
+			<div class="menu1" id="menu1">
+				<div class="control">Model:<br/><input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/></div>
+				<div class="control">Texture:<br/><input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/></div>
+				<div class="control-group">
+					<img id="texture-img" />	
+				</div>
+			</div>
+			<div class="menu2" id="menu2" style='display:none'>
+
+			</div>
+        </div>
+
+    </div>
+    </div>
+</body>
+<script type="text/javascript" id="includedscript" src="boxdrawer.js"></script>
+<script type="text/javascript" id="includedscript" src="lightview.js"></script>
+<script type="text/javascript" id="includedscript" src="project5.js"></script>
+<script type="text/javascript" id="includedscript" src="meshDrawer.js"></script>
+<script type="text/javascript" id="includedscript" src="filter.js"></script>
+<script type="text/javascript" id="includedscript" src="widthLine.js"></script>
+<script type="text/javascript" id="includedscript" src="recombine.js"></script>
+<script type="text/javascript" id="includedscript" src="frameBuffers.js"></script>
+<script type="text/javascript" id="includedscript" src="shadowMapFrameBuffers.js"></script>
+<script type="text/javascript" id="includedscript" src="paperTexture.js"></script>
+<script type="text/javascript" id="includedscript" src="pencilStrokeTexture.js"></script>
+<script type="text/javascript" id="includedscript" src="shadowMapping.js"></script>
+<script type="text/javascript" src="objmesh.js"></script>
+</html>
