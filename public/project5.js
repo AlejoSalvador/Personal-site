@@ -423,8 +423,10 @@ window.onload = function()
 	SetTransparency( document.getElementById('transparency-exp') );
 	SetPencilIntensity( document.getElementById('pencil-intensity-exp') );
 	ChangeMenu( document.getElementById('menu-select') );
-	//LoadObj( param );
-	//LoadTexture( param );
+	var DefaultObjFile = 'https://alejosalvador.com/models/nyra.obj';
+	var DefaultTextureFile = 'https://alejosalvador.com/models/nyra.png';
+	LoadObj( DefaultObjFile );
+	LoadTexture( DefaultTextureFile );
 	
 	// Dibujo la escena
 	DrawScene();
