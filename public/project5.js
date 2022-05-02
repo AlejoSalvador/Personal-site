@@ -423,9 +423,21 @@ window.onload = function()
 	SetTransparency( document.getElementById('transparency-exp') );
 	SetPencilIntensity( document.getElementById('pencil-intensity-exp') );
 	ChangeMenu( document.getElementById('menu-select') );
-	var DefaultObjFile = 'https://alejosalvador.com/models/nyra.obj';
-	var DefaultTextureFile = 'https://alejosalvador.com/models/nyra.png';
-	LoadObj( DefaultObjFile );
+	
+	fetch('https://alejosalvador.com/models/nyra.obj')
+	  .then(response => response.blob())
+	  .then(result => {LoadObjStart(new File([result], "name"))
+	  })
+	
+
+	
+	fetch('https://alejosalvador.com/models/nyra.png')
+	  .then(response => response.blob())
+	  .then(result => {LoadTextureStart(new File([result], "name"))
+	  })
+	
+	var DefaultTextureFile = '/models/nyra.png';
+	
 	LoadTexture( DefaultTextureFile );
 	
 	// Dibujo la escena
@@ -488,8 +500,17 @@ function SwapYZ( param )
 // Cargar archivo obj
 function LoadObj( param )
 {
+	
 	if ( param.files && param.files[0] ) 
 	{
+		LoadObjStart( param.files[0] );
+	}
+}
+
+// Cargar archivo obj
+function LoadObjStart( param )
+{
+	
 		var reader = new FileReader();
 		reader.onload = function(e) 
 		{
@@ -514,15 +535,23 @@ function LoadObj( param )
 			shadowMapping.setMesh( buffers.positionBuffer);
 			DrawScene();
 		}
-		reader.readAsText( param.files[0] );
-	}
+		reader.readAsText( param );
+	
 }
+
 
 // Cargar textura
 function LoadTexture( param )
 {
 	if ( param.files && param.files[0] ) 
 	{
+		
+		LoadTextureStart( param.files[0] );
+	}
+}
+
+function LoadTextureStart( param )
+{
 		var reader = new FileReader();
 		reader.onload = function(e) 
 		{
@@ -534,9 +563,9 @@ function LoadTexture( param )
 			}
 			img.src = e.target.result;
 		};
-		reader.readAsDataURL( param.files[0] );
-	}
+		reader.readAsDataURL( param );
 }
+
 
 // Setear Intensidad
 function SetShininess( param )
