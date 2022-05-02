@@ -11,7 +11,7 @@ var canvas, gl;         // canvas y contexto WebGL
 var perspectiveMatrix;	// matriz de perspectiva
 var lightView;
 
-var transX=0, transY=0, transZ=3, lookAtLight=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], rotationMatrix=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+var transX=0, transY=0, transZ=3, lookAtLight=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], rotationMatrix=[-1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,1];
 
 const shadowMapResolution=2048, lightPerspectiveMatrix=[
 		1, 0, 0, 0,
@@ -19,6 +19,28 @@ const shadowMapResolution=2048, lightPerspectiveMatrix=[
 		0, 0, 1, -1,
 		0, 0, 0, 1
 	];
+
+//help button	
+const button = document.querySelector('button');
+const popup = document.querySelector('.popup-wrapper');
+const close = document.querySelector('.popup-close');
+ 
+button.addEventListener('click', () => {
+    popup.style.display = 'block';
+});
+ 
+close.addEventListener('click', () => {
+    popup.style.display = 'none';
+});
+ 
+popup.addEventListener('click', e => {
+    // console.log(e);
+    if(e.target.className === 'popup-wrapper') {
+        popup.style.display = 'none';
+    }
+});
+	
+	
 // Funcion de inicialización, se llama al cargar la página
 function InitWebGL()
 {
