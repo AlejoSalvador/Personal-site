@@ -1,22 +1,36 @@
-<doctype html>
-<html>
-<head>
-<title> Non realistic model viewer </title>
+<DOCTYPE html>
+<html lang="en">
+	<head>
+		<title> Non realistic model viewer </title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta charset="utf-8">
 
-<!-- estilo-->
-<link href="style.css" rel="stylesheet">
+		<!-- estilo-->
+		<link href="style.css" rel="stylesheet">
+
+<script type="text/javascript" id="includedscript1" src="boxdrawer.js"></script>
+<script type="text/javascript" id="includedscript2" src="lightview.js"></script>
+<script type="text/javascript" id="includedscript3" src="project5.js"></script>
+<script type="text/javascript" id="includedscript4" src="meshDrawer.js"></script>
+<script type="text/javascript" id="includedscript5" src="filter.js"></script>
+<script type="text/javascript" id="includedscript6" src="widthLine.js"></script>
+<script type="text/javascript" id="includedscript7" src="recombine.js"></script>
+<script type="text/javascript" id="includedscript8" src="frameBuffers.js"></script>
+<script type="text/javascript" id="includedscript9" src="shadowMapFrameBuffers.js"></script>
+<script type="text/javascript" id="includedscript10" src="paperTexture.js"></script>
+<script type="text/javascript" id="includedscript11" src="pencilStrokeTexture.js"></script>
+<script type="text/javascript" id="includedscript12" src="shadowMapping.js"></script>
+<script type="text/javascript" id="includedscript13" src="objmesh.js"></script>
+
+	</head>
 
 
-
-</head>
-<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-<meta content="utf-8" http-equiv="encoding">
 
 <body onresize="WindowResize()">
     <!-- canvas (WebGL)-->
     <div id="canvas-div"><canvas id="canvas"></canvas></div><div id="controls-div">
 	<!--popup-->
-	<button>HELP: How to use</button>
+	<button type="button">HELP: How to use</button>
     <div class="popup-wrapper">
         <div class="popup">
             <div class="popup-close">x</div>
@@ -29,12 +43,11 @@
 				<p>Drag the mouse on the light source box to change light direction</p>
 				<p>Click on any of the checkboxes or move the sliders to change the rendering settings</p>
 				<p>You can load any model and/or texture uploading one from your own computer by clicking the corresponding button at the bottom of the page</p>
-                <!--  <a href="https://AlejoSalvador.com" target="_blank">¡Quiero verlos!</a>  -->
+                <!--  <a href="https://AlejoSalvador.com" target="_blank">Ver video</a>  -->
             </div>
         </div>
     </div>
     
-    <script src="popup.js"></script>
     <!-- menu y controles-->
     <div id="controls">
         <div class="control-group"><canvas id="lightcontrol"></canvas><div id="lightcontrol-label">Light Source</div></div>
@@ -72,10 +85,10 @@
 				<div class="control">Model:<br/><input id="obj" type="file" onchange="LoadObj(this)" accept=".obj"/></div>
 				<div class="control">Texture:<br/><input id="texture" type="file" onchange="LoadTexture(this)" accept="image/*"/></div>
 				<div class="control-group">
-					<img id="texture-img" />	
+					<img id="texture-img" title="texture loaded"/>	
 				</div>
 			</div>
-			<div class="menu2" id="menu2" style='display:none'>
+			<div class="menu2" id="menu2">
 
 			</div>
         </div>
@@ -83,17 +96,7 @@
     </div>
     </div>
 </body>
-<script type="text/javascript" id="includedscript" src="boxdrawer.js"></script>
-<script type="text/javascript" id="includedscript" src="lightview.js"></script>
-<script type="text/javascript" id="includedscript" src="project5.js"></script>
-<script type="text/javascript" id="includedscript" src="meshDrawer.js"></script>
-<script type="text/javascript" id="includedscript" src="filter.js"></script>
-<script type="text/javascript" id="includedscript" src="widthLine.js"></script>
-<script type="text/javascript" id="includedscript" src="recombine.js"></script>
-<script type="text/javascript" id="includedscript" src="frameBuffers.js"></script>
-<script type="text/javascript" id="includedscript" src="shadowMapFrameBuffers.js"></script>
-<script type="text/javascript" id="includedscript" src="paperTexture.js"></script>
-<script type="text/javascript" id="includedscript" src="pencilStrokeTexture.js"></script>
-<script type="text/javascript" id="includedscript" src="shadowMapping.js"></script>
-<script type="text/javascript" src="objmesh.js"></script>
+
+<script type="text/javascript" id="includedscript14" src="popup.js"></script>
+
 </html>

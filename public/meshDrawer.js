@@ -165,6 +165,7 @@ class MeshDrawer
 		// Binding de la textura
 		gl.useProgram( this.prog );
 
+		gl.deleteTexture(this.textura)
 		this.textura = gl.createTexture();
 		
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); 
