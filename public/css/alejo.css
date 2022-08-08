@@ -342,9 +342,7 @@ li { margin-left: -1em }
     margin-left: 10px;
     margin-right: 10px;
     box-sizing: border-box;
-    padding-left: 20px;
-    padding-right: 20px;
-    width: 100%;
+    width: 100vw;
     height: auto;
     float: inline-start;
     overflow-y: auto;
@@ -358,7 +356,7 @@ li { margin-left: -1em }
     box-sizing: border-box;
     padding-left: 20px;
     padding-right: 20px;
-    width: 100%;
+    width: 100vw;
     height: auto;
   }
   .slide
@@ -372,7 +370,10 @@ li { margin-left: -1em }
    height: auto;
   }
 
-
+  ::-webkit-scrollbar {
+    width: 0px;  /* remove scrollbar space */
+    background: transparent;
+  }
     .rsDefault .rsArrow
   {
   width: 44px;
