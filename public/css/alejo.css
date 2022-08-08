@@ -337,11 +337,11 @@ li { margin-left: -1em }
 
   .description, .description-me
   {
-    
+    clear: left;
     margin-top: 2em;
     margin-left: 0px;
     margin-right: 0px;
-    box-sizing: border-box;
+    box-sizing: content-box;
     padding-left: 20px;
     padding-right: 20px;
     width: 100%;
