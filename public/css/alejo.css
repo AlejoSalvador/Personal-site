@@ -177,7 +177,7 @@ figure.play:before {
   clear: left;
   height: 0;
   padding-top: calc(0.65 * 56.25%);
-  overflow: hidden;
+  overflow: visible;
   background-size: 100%;
   box-shadow: 4px 4px 20px -6px rgba(0, 0, 0, 0.2);
   border-radius: 6px;
