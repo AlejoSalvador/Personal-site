@@ -174,7 +174,7 @@ figure.play:before {
   position:relative;
   display: block;
   float: left;
-  clear: both;
+  clear: left;
   height: 0;
   padding-top: calc(0.65 * 56.25%);
   overflow: hidden;
@@ -335,19 +335,30 @@ li { margin-left: -1em }
     height: 100%;
   }
 
-  .description, .description-me
+  .description
   {
-    clear: both;
-    display: block;
+    clear: left;
     margin-top: 2em;
-    margin-left: 0px;
-    margin-right: 0px;
-    padding-left: 0px;
-    padding-right: 0px;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
     width: 100%;
     height: auto;
   }
-
+  .description-me
+  {
+    clear: left;
+    margin-top: 2em;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    height: auto;
+  }
   .slide
   {
     width: 90%;
