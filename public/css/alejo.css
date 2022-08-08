@@ -297,7 +297,7 @@ li { margin-left: -1em }
   }
 }
 
-@media only screen and ((max-width: 900px) or (max-height:700px))
+@media only screen 
 {
   /* hide navigation
   .rsNav
