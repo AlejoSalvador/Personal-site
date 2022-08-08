@@ -350,6 +350,11 @@ li { margin-left: -1em }
 
   .slide
   {
+    width: 90%;
+    max-width: 99vw;
+    min-height: 75%;
+    margin-left:5%;
+    margin-right:5%;
    overflow-y: auto;
    height: auto;
   }
