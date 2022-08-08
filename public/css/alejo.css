@@ -374,7 +374,7 @@ li { margin-left: -1em }
     box-sizing: border-box;
     width: 100vw;
     height: auto;
-    float: inline-start;
+    float: none;
     overflow-y: auto;
   }
   .description-me
@@ -387,6 +387,7 @@ li { margin-left: -1em }
     padding-left: 20px;
     padding-right: 20px;
     width: 100vw;
+    float: none;
     height: auto;
   }
 
