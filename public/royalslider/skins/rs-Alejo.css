@@ -141,6 +141,7 @@
 	width: 100% !important;
 	height: 6vw;
 	padding-top: 4px;
+	
 }
 .rsDefault .rsThumbsVer {
 	width: 96px;
@@ -194,7 +195,8 @@
 	.rsDefault .rsThumbsHor {
 		width: 100% !important;
 		height: 18vw;
-		padding-top: 4px;
+		padding-top: 0px;
+		padding-bottom: 0px;
 	}
 	.rsDefault .rsThumb {
 	

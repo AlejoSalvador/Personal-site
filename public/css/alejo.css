@@ -366,7 +366,7 @@ li { margin-left: -1em }
   .verticalalign
   {
     position: relative;
-    top: 5%;
+    top: 10%;
     -webkit-transform: translateY(0%);
     -ms-transform: translateY(0%);
     transform: translateY(0%);
