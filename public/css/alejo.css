@@ -335,30 +335,7 @@ li { margin-left: -1em }
     height: 100%;
   }
 
-  .description
-  {
-    clear: left;
-    margin-top: 2em;
-    margin-left: 10px;
-    margin-right: 10px;
-    box-sizing: border-box;
-    width: 100vw;
-    height: auto;
-    float: inline-start;
-    overflow-y: auto;
-  }
-  .description-me
-  {
-    clear: left;
-    margin-top: 2em;
-    margin-left: 10px;
-    margin-right: 10px;
-    box-sizing: border-box;
-    padding-left: 20px;
-    padding-right: 20px;
-    width: 100vw;
-    height: auto;
-  }
+
   .slide
   {
     width: 90%;
@@ -387,7 +364,31 @@ li { margin-left: -1em }
     -ms-transform: translateY(0%);
     transform: translateY(0%);
   }
-
+  
+  .description
+  {
+    clear: left;
+    margin-top: 2em;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-sizing: border-box;
+    width: 100vw;
+    height: auto;
+    float: inline-start;
+    overflow-y: auto;
+  }
+  .description-me
+  {
+    clear: left;
+    margin-top: 2em;
+    margin-left: 10px;
+    margin-right: 10px;
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100vw;
+    height: auto;
+  }
 
 }
 
