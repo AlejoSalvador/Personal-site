@@ -85,7 +85,7 @@ figure.play:before {
   left: 0;
   top: 0;
   right: 0;
-  bottom: 50px; /* height of thumbs (if not required set to 0) */
+  bottom: 5vh; /* height of thumbs (if not required set to 0) */
   height: auto; /* optionally add !important for WP version */
   width: auto;
 }
@@ -100,7 +100,7 @@ figure.play:before {
 {
   /*background-color: #fff;*/
   width: 80%;
-  max-width: 1800px;
+  max-width: 99vw;
   min-height: 75%;
   color: #000;
   position: absolute;
@@ -270,6 +270,25 @@ li { margin-left: -1em }
   /*background-color: #fff;*/
 }
 
+
+.intro
+{
+  max-width: 640px;
+  min-height: 240px;
+  text-align: center;
+  margin: auto;
+  margin-top: -50px;
+}
+
+.verticalalign
+{
+  position: relative;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
 @media only screen and (max-width: 1280px)
 {
   .description, .description-me
@@ -293,9 +312,17 @@ li { margin-left: -1em }
 
   .screenshot
   {
+    
       width: 100%;
       padding-top: calc(1 * 56.25%);
   }
+
+  .photo
+{
+  width: 40%;
+  height: 100%
+  padding-top: calc(0.39 * 100%);
+}
 
   .square
   {
@@ -336,6 +363,15 @@ li { margin-left: -1em }
   width: 44px;
   }
 
+  .verticalalign
+  {
+    position: relative;
+    top: 5%;
+    -webkit-transform: translateY(0%);
+    -ms-transform: translateY(0%);
+    transform: translateY(0%);
+  }
+
 
 }
 
@@ -358,23 +394,6 @@ li { margin-left: -1em }
   padding-bottom: -1rem;
 }
 
-.intro
-{
-  max-width: 640px;
-  min-height: 240px;
-  text-align: center;
-  margin: auto;
-  margin-top: -50px;
-}
-
-.verticalalign
-{
-  position: relative;
-  top: 50%;
-  -webkit-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-  transform: translateY(-50%);
-}
 
 #title
 {
