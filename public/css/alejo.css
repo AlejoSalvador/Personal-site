@@ -372,10 +372,7 @@ li { margin-left: -1em }
    height: auto;
   }
 
-  ::-webkit-scrollbar {
-    width: 0px;  /* remove scrollbar space */
-    background: transparent;
-  }
+
     .rsDefault .rsArrow
   {
   width: 44px;
