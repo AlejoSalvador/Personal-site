@@ -372,7 +372,7 @@ li { margin-left: -1em }
     margin-left: 10px;
     margin-right: 10px;
     box-sizing: border-box;
-    width: 100vw;
+    width: auto;
     height: auto;
    
     overflow-y: auto;
