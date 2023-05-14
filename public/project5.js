@@ -69,18 +69,18 @@ function InitWebGL()
 	var imag = new Image(); 	
 	imag.crossOrigin = "anonymous";
 	imag.onload = function() { paperTexture.handleTextureLoaded(imag); DrawScene(); }
-	imag.src = "https://alejosalvador.com/texturasfiltros/ivory-off-white-paper-texture.jpg";
+	imag.src = "https://alejoantoniosalvador.com/texturasfiltros/ivory-off-white-paper-texture.jpg";
 	
 	
 	var imag2 = new Image(); 	
 	imag2.crossOrigin = "anonymous";
 	imag2.onload = function() { pencilStroke.handlePencilTextureLoaded(imag2); DrawScene(); }
-	imag2.src = "https://alejosalvador.com/texturasfiltros/pencil.jpg";
+	imag2.src = "https://alejoantoniosalvador.com/texturasfiltros/pencil.jpg";
 	
 	var imag3 = new Image(); 	
 	imag3.crossOrigin = "anonymous";
 	imag3.onload = function() { pencilStroke.handleShadowTextureLoaded(imag3); DrawScene(); }
-	imag3.src = "https://alejosalvador.com/texturasfiltros/brushStroke.png";
+	imag3.src = "https://alejoantoniosalvador.com/texturasfiltros/brushStroke.png";
 	
 	
 	//inicializar correctamente segun las Checkbox
@@ -427,14 +427,14 @@ window.onload = function()
 	SetPencilIntensity( document.getElementById('pencil-intensity-exp') );
 	ChangeMenu( document.getElementById('menu-select') );
 	
-	fetch('https://alejosalvador.com/models/nyra.obj')
+	fetch('https://alejoantoniosalvador.com/models/nyra.obj')
 	  .then(response => response.blob())
 	  .then(result => {LoadObjStart(new File([result], "name"))
 	  })
 	
 
 	
-	fetch('https://alejosalvador.com/models/nyra.png')
+	fetch('https://alejoantoniosalvador.com/models/nyra.png')
 	  .then(response => response.blob())
 	  .then(result => {LoadTextureStart(new File([result], "name"))
 	  })
