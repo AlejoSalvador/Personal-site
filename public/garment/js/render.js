@@ -306,7 +306,7 @@ function init() {
 
   var loader = new THREE.GLTFLoader();
 
-  loader.load( '/model/man_base_mesh/scene.gltf', function ( gltf ) {
+  loader.load( 'model/man_base_mesh/scene.gltf', function ( gltf ) {
 
 
     bodyObject=gltf.scene;
