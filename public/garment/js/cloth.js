@@ -43,6 +43,9 @@ var MASS = 0.1;
 // Acceleration due to the gravity, scaled up experimentally for effect
 var GRAVITY = 9.8 * 140;
 
+//SpringConstant of Cloth. TODO: move it to cloth instead of everything
+var springConstant=2000;
+
 // The timestep (or deltaT used in integration of the equations of motion)
 // Smaller values result in a more stable simulation, but becomes slower.
 // This value was found experimentally to work well in this simulation.
@@ -80,25 +83,91 @@ Constraint.prototype.enforce = function() {
   // positions based on their current distance relative to their desired rest
   // distance.
   var v12 = (this.p1.position.clone()).sub(this.p2.position);
-  var factor = (v12.length() - this.distance) / v12.length();
-  var vcorr = v12.multiplyScalar(factor/2);
+  var distanceFromRest =  (this.distance-v12.length());
+ /*   if (distanceFromRest<-100){
+    console.log("this.distance",this.distance);
+    console.log("v12.length()",v12.length());
+    console.log(distanceFromRest*springConstant);
+    console.log("forceDirected",v12.clone().normalize().multiplyScalar(distanceFromRest*springConstant));
+    console.log("position1",this.p1.position.clone());
+    console.log("position2",this.p2.position.clone());
+    console.log("original1",this.p1.original.clone());
+    console.log("original",this.p2.original.clone());
+    console.log("net",this.p2.original.clone());
+    console.log("forceDirectedNegate",(v12.clone().normalize().multiplyScalar(distanceFromRest*springConstant)).negate());
 
-  if (this.p2.lockPosition==true)
+     const geometry = new THREE.BoxGeometry( 30, 30, 30 ); 
+            const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
+            // maxX=Math.max(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,maxX);
+            // maxY=Math.max(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,maxY);
+            // maxZ=Math.max(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,maxZ);
+            // minX=Math.min(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,minX);
+            // minY=Math.min(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,minY);
+            // minZ=Math.min(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,minZ);
+            const cube = new THREE.Mesh( geometry, material ); 
+      cube.position.set(this.p1.position.x,this.p1.position.y, this.p1.position.z);
+            scene.add( cube );
+
+            const geometry2 = new THREE.BoxGeometry( 30, 30, 30 ); 
+            const material2 = new THREE.MeshBasicMaterial( {color: 0x00ffff} ); 
+            // maxX=Math.max(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,maxX);
+            // maxY=Math.max(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,maxY);
+            // maxZ=Math.max(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,maxZ);
+            // minX=Math.min(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,minX);
+            // minY=Math.min(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,minY);
+            // minZ=Math.min(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,minZ);
+            const cube2 = new THREE.Mesh( geometry2, material2 ); 
+      cube2.position.set(this.p2.position.x,this.p2.position.y, this.p2.position.z);
+            scene.add( cube2 );
+
+            render();
+
+    throw new Error("Error_Message"); 
+    //process.exit(0); 
+  }  */
+  
+  var forceScalar = distanceFromRest*springConstant;
+
+  var forceDirected = v12.clone().normalize().multiplyScalar(forceScalar);
+
+/*   if (this.p2.lockPosition==true)
   {
     if (this.p1.lockPosition==true)
     {
       return
     }
-    this.p1.position.sub(vcorr.multiplyScalar(2));  
+    this.p1.addForce(forceDirected);  
   }else
   if (this.p1.lockPosition==true)
   {
-    this.p2.position.add(vcorr.multiplyScalar(2));
+    this.p2.addForce(forceDirected.negate());
   }else
-  {
-    this.p2.position.add(vcorr);
-    this.p1.position.sub(vcorr);
-  }
+  { */
+    this.p2.addConstrainsForce(forceDirected.clone().negate());
+
+    this.p1.addConstrainsForce(forceDirected);
+  /* } */
+
+  // var v12 = (this.p1.position.clone()).sub(this.p2.position);
+  // var factor = (v12.length() - this.distance) / v12.length();
+  // var vcorr = v12.multiplyScalar(factor/2);
+
+  // if (this.p2.lockPosition==true)
+  // {
+  //   if (this.p1.lockPosition==true)
+  //   {
+  //     return
+  //   }
+  //   this.p1.position.sub(vcorr.multiplyScalar(2));  
+  // }else
+  // if (this.p1.lockPosition==true)
+  // {
+  //   this.p2.position.add(vcorr.multiplyScalar(2));
+  // }else
+  // {
+  //   this.p2.position.add(vcorr);
+  //   this.p1.position.sub(vcorr);
+  // }
   // ----------- CODE END ------------
 };
 
@@ -233,12 +302,9 @@ Cloth.prototype.applyGravity = function() {
   // ----------- CODE BEGIN ------------
   // For each particle in the cloth, apply force due to gravity.
   for (var i = 0; i < particles.length; i++){
-    if (!particles[i].lockPosition)
-    {
       grav = new THREE.Vector3(0,-1,0);
       grav.multiplyScalar(particles[i].mass * GRAVITY);
-      particles[i].addForce(grav);
-    }
+      particles[i].addExternalForce(grav);
 
   }
   // ----------- CODE END ------------
@@ -269,17 +335,14 @@ Cloth.prototype.applyWind = function() {
   let faces = this.clothGeometry.faces;
   for (i = 0; i < faces.length; i++) {
     let face = faces[i];
-    if ((!particles[face.a].lockPosition)&&(!particles[face.b].lockPosition)&&(!particles[face.c].lockPosition))
-    {  
       let normal = face.normal;
       let tmpForce = normal
         .clone()
         .normalize()
         .multiplyScalar(normal.dot(windForce));
-      particles[face.a].addForce(tmpForce);
-      particles[face.b].addForce(tmpForce);
-      particles[face.c].addForce(tmpForce);
-    }
+      particles[face.a].addExternalForce(tmpForce);
+      particles[face.b].addExternalForce(tmpForce);
+      particles[face.c].addExternalForce(tmpForce);
   }
 };
 
@@ -299,7 +362,10 @@ Cloth.prototype.update = function(deltaT) {
   // For each particle in the cloth, have it update its position
   // by calling its integrate function.
   for (var i = 0; i < particles.length; i++){
-    particles[i].integrate(deltaT);
+    if (!particles[i].lockPosition)
+    {
+      particles[i].integrate(deltaT);
+    }
   }
   // -----------CODE END ------------
 };

@@ -350,17 +350,18 @@ function init() {
             //console.log("x",child.geometry.attributes.normal.getX(i),"y",child.geometry.attributes.normal.getZ(i),"z",child.geometry.attributes.normal.getY(i));
             var normalParticle=new THREE.Vector3(child.geometry.attributes.normal.getX(i),child.geometry.attributes.normal.getZ(i),child.geometry.attributes.normal.getY(i));
             bodyGeometry.push(new Particle(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250, -child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,MASS,false,normalParticle)) ;
-            //const geometry = new THREE.BoxGeometry( 3, 3, 3 ); 
-            //const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
-            // maxX=Math.max(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,maxX);
-            // maxY=Math.max(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,maxY);
-            // maxZ=Math.max(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,maxZ);
-            // minX=Math.min(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,minX);
-            // minY=Math.min(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,minY);
-            // minZ=Math.min(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,minZ);
-            //const cube = new THREE.Mesh( geometry, material ); 
-            //cube.position.set(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250, -child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z);
-            //scene.add( cube );
+           
+        /*     const geometry = new THREE.BoxGeometry( 3, 3, 3 ); 
+            const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
+             //maxX=Math.max(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,maxX);
+             //maxY=Math.max(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,maxY);
+             //maxZ=Math.max(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,maxZ);
+             //minX=Math.min(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,minX);
+             //minY=Math.min(child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250,minY);
+             //minZ=Math.min(-child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,minZ);
+            const cube = new THREE.Mesh( geometry, material ); 
+            cube.position.set(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250, -child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z);
+            scene.add( cube ); */
           }
         }
 
@@ -395,7 +396,10 @@ function init() {
 
     modelLoaded=true;
 
-    scene.add( bodyObject );
+    if (showingMesh)
+    {
+      scene.add( bodyObject );
+    }
 
   }, function ( xhr ) {
   

@@ -6,6 +6,7 @@ var wireframe = true;
 var rotate = false;
 var pinned = "Corners";
 var object = "None";
+var showingMesh = false;
 var movingSphere = false;
 var cornersPinned, oneEdgePinned, twoEdgesPinned, fourEdgesPinned, randomEdgesPinned;
 
@@ -27,22 +28,32 @@ function simulate() {
     updateSpherePosition();
   }
 
+  //TODO:fixing multiple cloth when this is splitted
   for (let i=0;i<clothObjectArray.length;i++)
   {
     if (!stopExternalForces)
     {
       // Apply all relevant forces to the cloth's particles
       clothObjectArray[i].cloth.applyForces();
-
-
-          // For each particle, perform Verlet integration to compute its new position
-      clothObjectArray[i].cloth.update(TIMESTEP);
   
-    }else{
-      for (var j = 0; j < clothObjectArray[i].cloth.particles.length; j++){
-        clothObjectArray[i].cloth.particles[j].previous= clothObjectArray[i].cloth.particles[j].position.clone();
-      }
-    }
+    }//else{
+ //     for (var j = 0; j < clothObjectArray[i].cloth.particles.length; j++){
+  //      clothObjectArray[i].cloth.particles[j].previous= clothObjectArray[i].cloth.particles[j].position.clone();
+//      }
+   // }
+
+   
+
+              // Apply cloth constraints
+         clothObjectArray[i].cloth.enforceConstraints();
+
+         if (modelLoaded && showingMesh)
+         {
+           handleMeshClothIntersection();
+         }
+
+              // For each particle, perform Verlet integration to compute its new position
+          clothObjectArray[i].cloth.update(TIMESTEP);
     
         // Pin constraints
       //enforcePinConstraints();
@@ -51,25 +62,22 @@ function simulate() {
     // Handle collisions with other objects in the scene
     clothObjectArray[i].cloth.handleCollisions();
 
-    // Handle self-intersections
-    if (avoidClothSelfIntersection) {
-     //clothObjectArray[i].cloth.handleSelfIntersections();
+    //REAL COLLISIONS WITH THE NEW MODEL
+     // Handle self-intersections
+/*      if (avoidClothSelfIntersection) {
+      //clothObjectArray[i].cloth.handleSelfIntersections();
     
-    //if (clothObjectArray.length>1)
-    // {
-      handleBetweenClothIntersection();
-    // }
+     //if (clothObjectArray.length>1)
+     // {
+       handleBetweenClothIntersection();
+     // }
      
-    } 
+     }  */
 
-    if (modelLoaded)
-    {
-      handleMeshClothIntersection();
-    }
+
  
 
-    // Apply cloth constraints
-      clothObjectArray[i].cloth.enforceConstraints();
+
 
   }
 
@@ -345,7 +353,7 @@ function handleMeshClothIntersection(){
     var bucketCloth= particlesClothPosBucketArray[k];
     for (var i = 0; i < bucketCloth.length; i++)
     {
-      var minDistance=1000;
+      var minDistance=100000;
       var closestMeshBucket=undefined;
       var closestMeshParticle=undefined;
       p1 = bucketCloth[i];
@@ -361,7 +369,7 @@ function handleMeshClothIntersection(){
               var bucketMesh=particlesMeshPosBucketArray[positionbucket2];
               for (var j = 0; j < bucketMesh.length; j++)
               { 
-                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance)
+                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance*0.4)
                 {
                     
                   if ((!bucketCloth[i].lockPosition) && (!bucketMesh[j].lockPosition))
@@ -383,7 +391,7 @@ function handleMeshClothIntersection(){
           }
         }
       }
-      if (minDistance<1000)
+      if (minDistance<100000) //100000 is big enough for it to be over any minDistance and is its intialization value
       {
         p2 = closestMeshBucket[closestMeshParticle];
         //console.log("intersection",bucketCloth[i].position.distanceTo(bucketMesh[j].position));
@@ -392,15 +400,31 @@ function handleMeshClothIntersection(){
         //var factor = (v12.length() - restDistance) / v12.length();
 
         // var factor = (p2.normal.length() - restDistance) / v12.length();
-        var normal = p2.normal.clone().normalize().multiplyScalar(restDistance*2);
+        var normal = p2.normal.clone().normalize().multiplyScalar(restDistance*0.1);
         //if (v12.projectOnVector(p2.normal).divide(p2.normal));
         //console.log(v12.projectOnVector(p2.normal));
-        //var vcorr=p1.netForce.clone().negate().projectOnVector(p2.normal);
-       if (v12.add(normal).projectOnVector(normal).length()<v12.projectOnVector(normal).length())
-       {
-        p1.position=p1.position.clone().add((p2.position.clone().sub(p1.position)).projectOnVector(normal)).add(normal);
+        //var vcorr=p1.netExternalForce.clone().negate().projectOnVector(p2.normal);
+
+/*         if (v12.add(normal).projectOnVector(normal).length()<v12.projectOnVector(normal).length())
+        {
+         p1.position=p1.position.clone().add((p2.position.clone().sub(p1.position)).projectOnVector(normal)).add(normal);
+         p1.previous=p1.position;
+        } */
+  
+        //TODO:trick es ordenar particulas como p2, p1 y p2+normal todo en el vector normal. Si p2 esta en el medio significa que necesito empujar hasta normal
+
+        
+       //removing current force on the normal direction velocity is removed with the previous trick
+       var netCurrentForces=p1.netExternalForce.clone().add(p1.netConstrainsForce);
+       var normalForceReverse=netCurrentForces.clone().projectOnVector(normal);
+       p1.addExternalForce(normalForceReverse.clone().negate());
+
+       //console.log("normalForce",p1.netExternalForce.clone().add(p1.netConstrainsForce).projectOnVector(normal));
+        //p1.position=p1.position.clone().add(normal);
+        //p1.position=p2.position.clone();
         p1.previous=p1.position;
-       }
+       
+
   
       }
 

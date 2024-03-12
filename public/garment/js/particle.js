@@ -19,7 +19,8 @@ function Particle(x, y, z, mass, cloth=true, normalParticle=undefined) {
   }
 
   this.lockPosition=false;
-  this.netForce = new THREE.Vector3(); // net force acting on particle
+  this.netExternalForce = new THREE.Vector3(); // net force acting on particle
+  this.netConstrainsForce = new THREE.Vector3();
   this.mass = mass; // mass of the particle
 }
 
@@ -40,10 +41,17 @@ Particle.prototype.unlock = function() {
   this.lockPosition=false;
 };
 
-Particle.prototype.addForce = function(force) {
+Particle.prototype.addExternalForce = function(force) {
   // ----------- CODE BEGIN ------------
   // Add the given force to the particle's total netForce.
-  this.netForce.add(force);
+  this.netExternalForce.add(force);
+  // ----------- CODE END ------------
+};
+
+Particle.prototype.addConstrainsForce = function(force) {
+  // ----------- CODE BEGIN ------------
+  // Add the given force to the particle's total netForce.
+  this.netConstrainsForce.add(force);
   // ----------- CODE END ------------
 };
 
@@ -57,13 +65,23 @@ Particle.prototype.integrate = function(deltaT) {
   // (2) Compute the new position of this particle using Verlet integration,
   //     and store it into this.position.
   // (3) Reset the net force acting on the particle (i.e. make it (0, 0, 0) again).
-  var accel = this.netForce.multiplyScalar(deltaT*deltaT/this.mass);
+  var externalAccel = this.netExternalForce.clone().multiplyScalar(deltaT*deltaT/this.mass);
+  var constrainsAccel= this.netConstrainsForce.clone().multiplyScalar(deltaT*deltaT/this.mass); //TODO:FIX THIS SHIT WITH 2500 spring strength over
+  //var constrainsAccelLength= Math.min((constrainsAccelRaw.clone()).length(),externalAccel.length()*2); //I try to make a correction to prevent the reduction of all the other terms in the calculation
+  //var constrainsAccel=constrainsAccelRaw;
+
+
   var vel = ((this.position.clone()).sub(this.previous)).multiplyScalar(1-DAMPING);
 
+  var totalAccel=externalAccel.clone().add(constrainsAccel);
+
+  var totalDisplacementLength=Math.min((totalAccel.clone().add(vel)).length(),restDistance*0.1); //to stop excesive movement
+  var totalDisplacementVector=totalAccel.clone().add(vel).setLength(totalDisplacementLength);
 
   this.previous = this.position.clone();
-  this.position = (this.position.clone()).add(accel.add(vel));
-  this.netForce = new THREE.Vector3();
+  this.position = (this.position.clone()).add(totalDisplacementVector);
+  this.netExternalForce = new THREE.Vector3();
+  this.netConstrainsForce = new THREE.Vector3();
   // ----------- CODE END ------------
 };
 

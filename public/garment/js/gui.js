@@ -12,6 +12,7 @@ if (guiEnabled) {
     this.wind = wind;
     this.stopExternalForces=stopExternalForces;
     this.object = object;
+    this.showingMesh = showingMesh;
     this.movingSphere = movingSphere;
     this.pinned = pinned;
 
@@ -77,6 +78,29 @@ if (guiEnabled) {
     .name("object")
     .onChange(function(value) {
       placeObject(value);
+    });
+  interactionControls
+    .add(guiControls, "showingMesh")
+    .name("adding person")
+    .onChange(function(value) {
+      if (value)
+      {
+        if (!showingMesh)
+        {
+          scene.add( bodyObject );
+          restartCloth();
+        }
+      }else 
+      {
+        if (showingMesh)
+        {
+          scene.remove( bodyObject );
+          restartCloth();
+        }
+        
+      }
+      showingMesh=value;
+
     });
   interactionControls
     .add(guiControls, "movingSphere")
