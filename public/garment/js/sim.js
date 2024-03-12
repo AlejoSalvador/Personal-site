@@ -369,7 +369,7 @@ function handleMeshClothIntersection(){
               var bucketMesh=particlesMeshPosBucketArray[positionbucket2];
               for (var j = 0; j < bucketMesh.length; j++)
               { 
-                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance*0.4)
+                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance*1)
                 {
                     
                   if ((!bucketCloth[i].lockPosition) && (!bucketMesh[j].lockPosition))
