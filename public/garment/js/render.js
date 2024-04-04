@@ -22,6 +22,14 @@ if (!Detector.webgl) Detector.addGetWebGLMessage();
 var particlesMeshPosBucketArray = new Array(rowOfBuckets*rowOfBuckets*rowOfBuckets);
 
 
+var currentMouseScreen;
+var mouseButtonDown=false;
+var currentTool="grab"; //option are "grab", "sew", "increaseLength", "cut"
+var grabbingCloth=false;
+var currentlyCutting=false;
+var cutStart=THREE.Vector2();
+var cutEnd=THREE.Vector2();
+var currentCutLine=new THREE.Line();
 
 var modelLoaded=false;
 var bodyObject;
@@ -29,12 +37,16 @@ var bodyGeometry=[];
 var container;
 var stats;
 var controls;
+
 var camera, scene, renderer;
+var cameraEdition, sceneEdition;
 var time;
 
 
 var clothObject;
+var clothObjectEdition;
 var clothObjectArray = []; 
+var clothObjectEditionArray=[];
 
 var groundMaterial;
 
@@ -52,6 +64,7 @@ var heightSpawn=125;
 
 // The cloth object
 var cloth = new Cloth(xSegs, ySegs, fabricLength, heightSpawn);
+var clothEdition  = new Cloth(xSegs, ySegs, fabricLength, heightSpawn);
 
 // Property of the ground floor in the scene
 var GROUND_Y = -249;
@@ -88,16 +101,37 @@ function init() {
   scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0xcce0ff, 500, 10000);
 
+    //initializing edition scene
+
+    // scene (First thing you need to do is set up a scene)
+    sceneEdition = new THREE.Scene();
+
+
   // camera (Second thing you need to do is set up the camera)
-  camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 10000);
+  camera = new THREE.PerspectiveCamera(30, window.innerWidth/2 / window.innerHeight, 1, 10000);
   camera.position.y = 450;
   camera.position.z = 1500;
+  camera.aspect=window.innerWidth/2 / window.innerHeight;
   scene.add(camera);
+
+
+      // camera (Second thing you need to do is set up the camera for edition)
+      cameraEdition = new THREE.OrthographicCamera(-window.innerWidth/2,window.innerWidth/2,window.innerHeight,-window.innerHeight, 1, 10000);
+      cameraEdition.position.y = 0;
+      cameraEdition.position.z = 1500;
+      cameraEdition.zoom=2;
+      sceneEdition.add(cameraEdition);
+      cameraEdition.updateProjectionMatrix();
+
 
   // renderer (Third thing you need is a renderer)
   renderer = new THREE.WebGLRenderer({ antialias: true, devicePixelRatio: 1 });
-  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(scene.fog.color);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
+
+  renderer.setScissorTest(true);
+  //renderer.setScissor( 100, 100, window.innerWidth/2, window.innerHeight );
 
   container.appendChild(renderer.domElement);
   renderer.gammaInput = true;
@@ -191,7 +225,47 @@ function init() {
   } );
 
   clothObjectArray.push(clothObject);
+
+  //HERE I ADD clothObjectEdition
+  //TODO:Fixing the fact that particles are the same and this bring lots of problems. I should be creating a neww identical cloth
+
+  var clothMaterialEditionAux = new THREE.MeshBasicMaterial({
+    color: 0xaa2929,
+    wireframeLinewidth: 2,
+    map: clothTexture,
+    side: THREE.DoubleSide,
+    alphaTest: 0.5,
+    wireframe:wireframe,
+  });
+
+  var clothGeometryEditionAux = new THREE.ParametricGeometry(initParameterizedPosition(fabricLength,fabricLength), clothEdition.w, clothEdition.h);
+  clothGeometryEditionAux.dynamic = true;
+
+  
+  clothEdition.clothGeometry=clothGeometryEditionAux;
+  clothEdition.clothMaterial=clothMaterialEditionAux;
+
+  clothObjectEdition = new THREE.Mesh(clothGeometryEditionAux, clothMaterialEditionAux);
+  clothObjectEdition.position.set(0, 0, 0);
+  clothObjectEdition.rotation.x=Math.PI/2;
+
+
+  clothObjectEdition.cloth=clothEdition;
+  // whenever we make something, we need to also add it to the scene
  
+  
+  sceneEdition.add(clothObjectEdition);
+  
+  // more stuff needed for texture
+  clothObjectEdition.customDepthMaterial = new THREE.ShaderMaterial( {
+  uniforms: uniforms,
+  vertexShader: vertexShader,
+  fragmentShader: fragmentShader,
+  side: THREE.DoubleSide
+  } );
+
+
+  clothObjectEditionArray.push(clothObjectEdition);
 
   // sphere
   // sphere geometry
@@ -351,6 +425,16 @@ function init() {
             var normalParticle=new THREE.Vector3(child.geometry.attributes.normal.getX(i),child.geometry.attributes.normal.getZ(i),child.geometry.attributes.normal.getY(i));
             bodyGeometry.push(new Particle(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,child.geometry.attributes.position.getZ(i)/ maxAxis*300-cent.y+size.y * 0.5-250, -child.geometry.attributes.position.getY(i)/ maxAxis*300-cent.z,MASS,false,normalParticle)) ;
            
+            child.geometry
+
+                // recalculate body normals
+                //TODO: no se si deberia cambiarlo o mantener
+                child.geometry.computeFaceNormals();
+                child.geometry.computeVertexNormals();
+
+                child.geometry.normalsNeedUpdate = true;
+                child.geometry.verticesNeedUpdate = true;
+
         /*     const geometry = new THREE.BoxGeometry( 3, 3, 3 ); 
             const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
              //maxX=Math.max(child.geometry.attributes.position.getX(i)/ maxAxis*300-cent.x,maxX);
@@ -368,7 +452,7 @@ function init() {
         
         
 
-        child.castShadow=true;
+        //child.castShadow=true;
         child.receiveShadow=true;
       }
     } );
@@ -422,11 +506,30 @@ function init() {
 
   // wireframe sets whether or not the wireframe is shown by default
   showWireframe(wireframe);
+
+
+    
+  
+
+
+
+
+
+
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth/2 / window.innerHeight;
   camera.updateProjectionMatrix();
+
+  cameraEdition.left= -window.innerWidth/2;
+  cameraEdition.right= window.innerWidth/2;
+  cameraEdition.top= window.innerHeight;
+  cameraEdition.bottom= -window.innerHeight;
+
+  //cameraEdition.aspect = window.innerWidth/2 / window.innerHeight;
+  cameraEdition.updateProjectionMatrix();
+
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -435,71 +538,248 @@ function onPointerMove( event ) {
 	// calculate pointer position in normalized device coordinates
 	// (-1 to +1) for both components
 
-	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  var deviceCordinates=( event.clientX / (window.innerWidth/2) ); //combines both screen in 1. Its interval is 0 to 2 or 0 to 1 for 1 screen and 1 to 2 for the other
+
+  if (deviceCordinates>1)
+  {
+    deviceCordinates=deviceCordinates-1; 
+    if ((currentMouseScreen==0)&&(grabbingCloth==true)) //I drop cloth if i was holding it when i go to the other screen
+    {
+      intersection.object.cloth.particles[intersection.face.a].lockPosition=false;
+      grabbingCloth=false;
+    } 
+    currentMouseScreen=1;
+    if (mouseButtonDown==false)
+    {
+     controls.enabled=false;
+    }
+  }else
+  {
+    if ((currentMouseScreen==1)&&(currentlyCutting==true)) //I stop cutting cloth if i was holding it when i go to the other screen
+    {
+      sceneEdition.remove(currentCutLine);
+      currentlyCutting=false;
+      cutCloth();
+    } 
+
+    currentMouseScreen=0;  
+    if (mouseButtonDown==false)
+    {
+      controls.enabled=true;
+    } 
+
+
+
+  }
+
+	pointer.x = deviceCordinates * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 }
 
 function mousedown(){
 
-  //TODO: changing position mouse to closest vertex instead of just a the face.A one
-  //TODO: Fixing when sometime doesnt detect some parts close to the outside
+  mouseButtonDown=true;
 
-      // update the picking ray with the camera and pointer position
-	raycaster.setFromCamera( pointer, camera );
-
-
-	// calculate objects intersecting the picking ray
-	const intersects = raycaster.intersectObjects( scene.children );
-  if((intersects.length>0))
+  if ((currentTool=="grab")&&(currentMouseScreen==0))
   {
-    
-    var i=0;
-    while((i<intersects.length)&&(typeof (intersects[ i ].object.cloth)=="undefined"))
+    //TODO: changing position mouse to closest vertex instead of just a the face.A one
+    //TODO: Fixing when sometime doesnt detect some parts close to the outside
+
+        // update the picking ray with the camera and pointer position
+    raycaster.setFromCamera( pointer, camera );
+
+
+    // calculate objects intersecting the picking ray
+    const intersects = raycaster.intersectObjects( scene.children );
+    if((intersects.length>0))
     {
-      i=i+1;
-    }
-    if (i<intersects.length)
-    {
-      intersection=intersects[ i ];
-      depthPlane.setFromNormalAndCoplanarPoint( camera.getWorldDirection( depthPlane.normal ), intersection.object.cloth.particles[intersection.face.a].position );
       
-    controls.enabled=false; 
-    }
-    
+      var i=0;
+      while((i<intersects.length)&&(typeof (intersects[ i ].object.cloth)=="undefined"))
+      {
+        i=i+1;
+      }
+      if (i<intersects.length)
+      {
+        intersection=intersects[ i ];
+        depthPlane.setFromNormalAndCoplanarPoint( camera.getWorldDirection( depthPlane.normal ), intersection.object.cloth.particles[intersection.face.a].position );
+        
+      controls.enabled=false; 
+      grabbingCloth=true;
+      }  
 
-  } 
- 
+    } 
 
+  }else if ((currentTool=="cut")&&(currentMouseScreen==1))
+  {
+    currentlyCutting=true;
+
+    // update the picking ray with the camera and pointer position
+    cutStart=new THREE.Vector2(pointer.x*(window.innerWidth/2)/cameraEdition.zoom,pointer.y*(window.innerHeight)/cameraEdition.zoom);
+
+
+  }
+  
 }
 
 function mouseup(){
+
+  mouseButtonDown=false;
   if (controls.enabled==false)
   {
-    intersection.object.cloth.particles[intersection.face.a].lockPosition=false;
     controls.enabled=true;
+
+    if (grabbingCloth==true)
+    {
+      intersection.object.cloth.particles[intersection.face.a].lockPosition=false;
+    }
+    else if (currentlyCutting==true)
+    {
+      sceneEdition.remove(currentCutLine);
+      cutEnd=new THREE.Vector2(pointer.x*(window.innerWidth/2)/cameraEdition.zoom,pointer.y*(window.innerHeight)/cameraEdition.zoom);
+      currentlyCutting=false;
+      cutCloth();
+    }
+
+
   }
     
 }
 
 
 function scrollWhell(event){
-  if (controls.enabled==false)
+  const delta = -Math.sign(event.deltaY);
+  if ((controls.enabled==false)&&(grabbingCloth==true))
   {
-    const delta = -Math.sign(event.deltaY);
 
     //intersection.object.cloth.particles[intersection.face.a].lockPosition=false;
 
     depthPlaneAux=new THREE.Vector3();
     depthPlaneAux=depthPlaneAux.copy(depthPlane.normal);
-    depthPlane.translate(depthPlaneAux.multiplyScalar(delta*10));
+    depthPlane.translate(depthPlaneAux.multiplyScalar(delta*50));
     
+  }else if (currentMouseScreen==1)
+  {
+    
+    cameraEdition.zoom=cameraEdition.zoom+delta/5;
+    cameraEdition.updateProjectionMatrix();
+  }  
+}
+
+// Determine the intersection point of two line segments
+// Return FALSE if the lines don't intersect
+function segmentIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+  // Check if none of the lines are of length 0
+	if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+		return false
+	}
+
+	denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
+
+  // Lines are parallel
+	if (denominator === 0) {
+		return false
+	}
+
+	let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+	let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+
+  // is the intersection along the segments
+	if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+		return false
+	}
+
+  // Return a object with the x and y coordinates of the intersection
+	let x = x1 + ua * (x2 - x1)
+	let y = y1 + ua * (y2 - y1)
+
+	return {x, y}
+}
+
+function cutCloth(){
+  for (var i=0;i<clothObjectEditionArray.length;i++)
+  {
+    //first step is cutting the constrains
+    let filteredConstraintsEdition=[];
+    let filteredConstraints=[];
+    for (var j=0;j<clothObjectEditionArray[i].cloth.constraints.length;j++)
+    {
+      var position1=clothObjectEditionArray[i].cloth.constraints[j].p1.position;
+      var position2=clothObjectEditionArray[i].cloth.constraints[j].p2.position;
+
+      //TODO:Detect if line interesect with the other line. If they do remove the constrains. To do so reconstruct it with the elements on the same side. for both version of the cloth
+      //looking to preserve equivalence between I th element in a cloth and ith element in the edition version of it. Do the same thing with traingle removal 
+      if (segmentIntersect(position1.x, position1.z, position2.x, position2.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)==false)
+      {
+
+        filteredConstraintsEdition.push(clothObjectEditionArray[i].cloth.constraints[j]);
+        filteredConstraints.push(clothObjectArray[i].cloth.constraints[j]);
+
+      }
+    }
+    clothObjectEditionArray[i].cloth.constraints=filteredConstraintsEdition;
+    clothObjectArray[i].cloth.constraints=filteredConstraints;
+
+    //second step is cutting the triangles
+    let filteredTriangles=[];
+    let filteredTrianglesEdition=[];
+    let filteredTrianglesUVS=[];
+    let filteredTrianglesEditionUVS=[];
+
+    const unfilteredTrianglesEdition=clothObjectEditionArray[i].cloth.clothGeometry.faces;
+    for (var j=0;j<clothObjectEditionArray[i].cloth.clothGeometry.faces;j++)
+    {
+      vertex1=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].a];
+      vertex2=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].b];
+      vertex3=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].c];
+
+      if ((segmentIntersect(vertex1.x, vertex1.z, vertex2.x, vertex2.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)==false)&&
+      (segmentIntersect(vertex1.x, vertex1.z, vertex3.x, vertex3.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)==false)&&
+      (segmentIntersect(vertex2.x, vertex2.z, vertex3.x, vertex3.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)==false))
+      {
+        filteredTrianglesEdition.push(unfilteredTrianglesEdition[j]);
+        filteredTriangles.push(clothObjectArray[i].cloth.clothGeometry.faces[j]);
+
+        filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[j]);
+        filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[j]);
+
+      }
+    }
+
+    clothObjectEditionArray[i].cloth.clothGeometry.dynamic = true;
+    clothObjectArray[i].cloth.clothGeometry.dynamic = true;
+
+    clothObjectEditionArray[i].cloth.clothGeometry.faces=filteredTrianglesEdition;
+    clothObjectArray[i].cloth.clothGeometry.faces=filteredTriangles;
+
+    clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs=filteredTrianglesEditionUVS;
+    clothObjectArray[i].cloth.clothGeometry.faceVertexUvs=filteredTrianglesUVS;
+
+      // recalculate cloth normals
+    clothObjectArray[i].cloth.clothGeometry.computeFaceNormals();
+    clothObjectArray[i].cloth.clothGeometry.computeVertexNormals();
+
+    // recalculate cloth normals
+    clothObjectEditionArray[i].cloth.clothGeometry.computeFaceNormals();
+    clothObjectEditionArray[i].cloth.clothGeometry.computeVertexNormals();
+            
+
+      
+    clothObjectArray[i].cloth.clothGeometry.normalsNeedUpdate = true;
+    clothObjectEditionArray[i].cloth.clothGeometry.normalsNeedUpdate = true;
+
+    clothObjectEditionArray[i].cloth.clothGeometry.groupsNeedUpdate = true;
+    clothObjectEditionArray[i].cloth.clothGeometry.uvsNeedUpdate = true;
+
+    clothObjectArray[i].cloth.clothGeometry.groupsNeedUpdate = true;
+    clothObjectArray[i].cloth.clothGeometry.uvsNeedUpdate = true;
+
+
+
   }
 
-
-   
-
-    
 }
 
 //addClothPiece() is used when we want to add an additional cloth piece
@@ -635,7 +915,7 @@ function animate() {
     //console.log(bodyGeometry);
   }
 
-  if (controls.enabled==false)
+  if ((controls.enabled==false)&&(grabbingCloth==true))
   {
 
     var newPosition=new THREE.Vector3();
@@ -647,8 +927,9 @@ function animate() {
 
     if (raycaster.ray.intersectPlane( depthPlane, newPosition ))
     {
+
       intersection.object.cloth.particles[intersection.face.a].position.copy(newPosition);
-      intersection.object.cloth.particles[intersection.face.a].previous = intersection.object.cloth.particles[intersection.face.a].position.clone();
+      intersection.object.cloth.particles[intersection.face.a].previous = newPosition.clone();
 
       intersection.object.cloth.particles[intersection.face.a].lockPosition=true;
       
@@ -664,7 +945,24 @@ function animate() {
 
    // controls.enabled=true;
 
+  }else if (currentlyCutting==true)
+  {
+    var cutCurrentEnd=new THREE.Vector2(pointer.x*(window.innerWidth/2)/cameraEdition.zoom,pointer.y*(window.innerHeight)/cameraEdition.zoom);
+
+    const material = new THREE.LineBasicMaterial({
+      color: 0x0000ff
+    });
+    const points = [];
+    points.push( new THREE.Vector3( cutStart.x, cutStart.y, 700 ) );
+    points.push( new THREE.Vector3( cutCurrentEnd.x, cutCurrentEnd.y, 700 ) );
+
+    const geometry = new THREE.BufferGeometry().setFromPoints( points );
+
+    sceneEdition.remove(currentCutLine);
+    currentCutLine = new THREE.Line( geometry, material );
+    sceneEdition.add( currentCutLine );
   }
+
 
   time = Date.now();
   for (let i=0;i<simulationFramePerVisualizedFrame;i++)
@@ -681,7 +979,7 @@ function animate() {
 function render() {
   let timer = Date.now() * 0.0002;
 
-
+/* 
   for (var j=0;j<clothObjectArray.length;j++)
   {
     // update position of the cloth
@@ -698,7 +996,7 @@ function render() {
 
     clothObjectArray[j].cloth.clothGeometry.normalsNeedUpdate = true;
     clothObjectArray[j].cloth.clothGeometry.verticesNeedUpdate = true;
-  }
+  } */
   // update sphere position from current sphere position in simulation
   sphere.position.copy(spherePosition);
   
@@ -713,5 +1011,17 @@ function render() {
   }
 
   camera.lookAt(scene.position);
+  
+
+  renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
+  renderer.setScissor( 0, 0, window.innerWidth/2, window.innerHeight);
   renderer.render(scene, camera); // render the scene
+
+  //render edition Scene
+
+   renderer.setViewport( window.innerWidth/2, 0, window.innerWidth/2, window.innerHeight );
+  renderer.setScissor( window.innerWidth/2, 0, window.innerWidth/2, window.innerHeight);
+  renderer.render(sceneEdition, cameraEdition); 
+
+
 }

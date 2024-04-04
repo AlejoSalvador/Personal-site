@@ -38,6 +38,7 @@ if (guiEnabled) {
 
   // GUI elements
   gui = new dat.GUI();
+  gui.domElement.id = 'gui';
 
   let sizeControl = gui
     .add(guiControls, "fabricLength", 200, 1000)

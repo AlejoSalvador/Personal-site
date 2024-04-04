@@ -62,6 +62,23 @@ function simulate() {
     // Handle collisions with other objects in the scene
     clothObjectArray[i].cloth.handleCollisions();
 
+
+
+      // update position of the cloth
+      // i.e. copy positions from the particles (i.e. result of physics simulation)
+      // to the cloth geometry
+      let p = clothObjectArray[i].cloth.particles;
+      for (let j = 0, il = p.length; j < il; j++) {
+        clothObjectArray[i].cloth.clothGeometry.vertices[j].copy(p[j].position);
+      }
+  
+      // recalculate cloth normals
+      clothObjectArray[i].cloth.clothGeometry.computeFaceNormals();
+      clothObjectArray[i].cloth.clothGeometry.computeVertexNormals();
+  
+      clothObjectArray[i].cloth.clothGeometry.normalsNeedUpdate = true;
+      clothObjectArray[i].cloth.clothGeometry.verticesNeedUpdate = true;
+    
     //REAL COLLISIONS WITH THE NEW MODEL
      // Handle self-intersections
 /*      if (avoidClothSelfIntersection) {
@@ -205,6 +222,10 @@ function showWireframe(flag) {
   for (var i=0; i<clothObjectArray.length;i++){
     clothObjectArray[i].cloth.clothMaterial.wireframe = flag;
   }
+  for (var i=0; i<  clothObjectEditionArray.length;i++){
+    clothObjectEditionArray[i].cloth.clothMaterial.wireframe = flag;
+  }
+
 
   wireframe = flag;
   
@@ -340,7 +361,7 @@ function handleMeshClothIntersection(){
         console.log("bucket",bucket);
         console.log("clothObjectArray[i].cloth.particles[j].position",clothObjectArray[i].cloth.particles[j].position);
         console.log("clothObjectArray[i].cloth.particles[j]",clothObjectArray[i].cloth.particles[j]);
-      }//TODO:FIXING THIS bucket NaN when restarting. This means position deleted at restart
+      }//TODO:FIXING THIS bucket NaN when restarting. This means position deleted at restart. LOOKS FIXED. REMOVING THIS IF IT DOES NOT POP UP AGAIN
       particlesClothPosBucketArray[bucket].push(clothObjectArray[i].cloth.particles[j]);
     }
   }
@@ -353,9 +374,11 @@ function handleMeshClothIntersection(){
     var bucketCloth= particlesClothPosBucketArray[k];
     for (var i = 0; i < bucketCloth.length; i++)
     {
-      var minDistance=100000;
-      var closestMeshBucket=undefined;
-      var closestMeshParticle=undefined;
+      var normalTotal=new THREE.Vector3(0,0,0);
+      var closeCount=0;
+      var closestPosition=new THREE.Vector3();
+      var closestDistance=100000;
+
       p1 = bucketCloth[i];
       for (var a=-1;a<2;a++)
       {
@@ -369,20 +392,26 @@ function handleMeshClothIntersection(){
               var bucketMesh=particlesMeshPosBucketArray[positionbucket2];
               for (var j = 0; j < bucketMesh.length; j++)
               { 
-                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance*1)
+                if (bucketCloth[i].position.distanceTo(bucketMesh[j].position) < restDistance*0.4)
                 {
                     
                   if ((!bucketCloth[i].lockPosition) && (!bucketMesh[j].lockPosition))
                   {
                     p2 = bucketMesh[j];
                     var v12 = (p1.position.clone()).sub(p2.position);
+                    var v12Length= v12.length();
 
-                    if (v12.length()<minDistance)
+                    if (v12Length<closestDistance)
                     {
-                      minDistance=v12.length();
-                      closestMeshBucket=bucketMesh;
-                      closestMeshParticle=j;
+                      closestDistance=v12;
+                      closestPosition=p2.position;  
                     }
+
+                    normalTotal=normalTotal.clone().add(p2.normal.clone().multiplyScalar(1/v12Length));
+                      
+                    closeCount++;
+
+         
                       
                   }
                 }
@@ -391,16 +420,24 @@ function handleMeshClothIntersection(){
           }
         }
       }
-      if (minDistance<100000) //100000 is big enough for it to be over any minDistance and is its intialization value
+      if (closeCount>0) //this means at least one was close enough
       {
-        p2 = closestMeshBucket[closestMeshParticle];
+        var normalAVG=normalTotal.clone().multiplyScalar(1/closeCount);
+
+        //p2 = closestMeshBucket[closestMeshParticle];
+
         //console.log("intersection",bucketCloth[i].position.distanceTo(bucketMesh[j].position));
 
-        var v12 = (p1.position.clone()).sub(p2.position);
+        //var v12 = (p1.position.clone()).sub(p2.position);
         //var factor = (v12.length() - restDistance) / v12.length();
 
         // var factor = (p2.normal.length() - restDistance) / v12.length();
-        var normal = p2.normal.clone().normalize().multiplyScalar(restDistance*0.1);
+
+
+        
+        ////var normal = normalAVG.clone().normalize().multiplyScalar(restDistance*0.1);
+
+
         //if (v12.projectOnVector(p2.normal).divide(p2.normal));
         //console.log(v12.projectOnVector(p2.normal));
         //var vcorr=p1.netExternalForce.clone().negate().projectOnVector(p2.normal);
@@ -416,12 +453,14 @@ function handleMeshClothIntersection(){
         
        //removing current force on the normal direction velocity is removed with the previous trick
        var netCurrentForces=p1.netExternalForce.clone().add(p1.netConstrainsForce);
-       var normalForceReverse=netCurrentForces.clone().projectOnVector(normal);
+       var normalForceReverse=netCurrentForces.clone().projectOnVector(normalAVG);
        p1.addExternalForce(normalForceReverse.clone().negate());
+
 
        //console.log("normalForce",p1.netExternalForce.clone().add(p1.netConstrainsForce).projectOnVector(normal));
         //p1.position=p1.position.clone().add(normal);
-        //p1.position=p2.position.clone();
+
+        p1.position=p1.position.clone().add(normalAVG.clone().setLength(restDistance*0.4));
         p1.previous=p1.position;
        
 

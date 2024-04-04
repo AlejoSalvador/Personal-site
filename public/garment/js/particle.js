@@ -71,12 +71,14 @@ Particle.prototype.integrate = function(deltaT) {
   //var constrainsAccel=constrainsAccelRaw;
 
 
-  var vel = ((this.position.clone()).sub(this.previous)).multiplyScalar(1-DAMPING);
+  var vel = ((this.position.clone()).sub(this.previous)).multiplyScalar(1-DAMPING/simulationFramePerVisualizedFrame);
 
   var totalAccel=externalAccel.clone().add(constrainsAccel);
 
-  var totalDisplacementLength=Math.min((totalAccel.clone().add(vel)).length(),restDistance*0.1); //to stop excesive movement
+  var totalDisplacementLength=Math.min((totalAccel.clone().add(vel)).length(),restDistance*0.2); //to stop excesive movement
   var totalDisplacementVector=totalAccel.clone().add(vel).setLength(totalDisplacementLength);
+
+
 
   this.previous = this.position.clone();
   this.position = (this.position.clone()).add(totalDisplacementVector);
@@ -116,6 +118,11 @@ Particle.prototype.handleSphereCollision = function() {
     posFriction = this.previous.clone().add(mov);
 
     this.position = (posFriction.multiplyScalar(friction)).add(posNoFriction.multiplyScalar(1-friction));
+
+/*     var netCurrentForces=this.netExternalForce.clone().add(this.netConstrainsForce);
+    var normalForceReverse=netCurrentForces.clone().projectOnVector(diff);
+    this.addExternalForce(normalForceReverse.clone().negate()); */
+
     // ----------- CODE END ------------
   }
 };

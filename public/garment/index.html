@@ -36,11 +36,11 @@
 			}
 
 			a {
-				text-decoration: underline;
+				
 				cursor: pointer;
 			}
 
-			#stats { position: absolute; top:0; left: 0 }
+			#stats { position: absolute; top:0; right: 10% }
 			#stats #fps { background: transparent !important }
 			#stats #fps #fpsText { color: #aaa !important }
 			#stats #fps #fpsGraph { display: true }
@@ -48,6 +48,67 @@
 	</head>
 
 	<body>
+		<div class="wrapper hover_collapse">
+
+			<!-- Top bar -->
+			<div class="top_navbar">
+				<!-- logo -->
+					<div class="logo">Garment</div>
+				<!-- menu button -->
+				   <div class="menu">
+			
+				   </div>
+				
+				</div>
+			
+			<!-- Sidebar -->
+			<!-- each of the elements in the bar (grab, cat, sew, etc) should also be in menuUI.js to enable mode change -->
+
+			<div class="sidebar">
+				<div class="sidebar_inner">
+					<ul>
+						<li>
+							<div class="grab selected">	
+								<a href="#">
+									<span class="icon"><i class="fa-solid fa-hand"></i></span>
+									<span class="text">Grab</span>
+								</a>
+							</div>
+						</li>
+						
+						<li>
+							<div class="cut">	
+								<a href="#">
+									<span class="icon"><i class="fa-solid fa-scissors"></i></span>
+									<span class="text">Cut</span>
+								</a>
+							</div>
+						</li>
+						<li>
+							<div class="sew">	
+								<a href="#">
+									<span class="icon2"><img src="Icons/sewIcon.webp" width="28" height="28" /></span>
+									<span class="text">Sew</span>
+								</a>
+							</div>
+						</li>
+						<li>
+							<div class="increaseLength">	
+								<a href="#">
+									<span class="icon"><i class="fa-solid fa-up-down"></i></span>
+									<span class="text">Increase Length</span>
+								</a>
+							</div>
+						</li>
+						
+					</ul>
+				  </div>
+				  
+
+			</div>
+			
+			</div>
+
     <script src="libjs/three.min.js"></script>
 		<script src="libjs/Detector.js"></script>
 		<script src="libjs/stats.min.js"></script>
@@ -89,11 +150,16 @@
 			}
 		</script>
 
+
+		<!-- Loading images from kit awesome-->
+		<script src="https://kit.fontawesome.com/f9c7d76c65.js" crossorigin="anonymous"></script>
+
     <script src="js/particle.js"></script>
     <script src="js/cloth.js"></script>
     <script src="js/sim.js"> </script>
     <script src="js/gui.js"> </script>
     <script src="js/render.js" ></script>
+	<script src="js/menuUI.js" ></script>
 
 	</body>
 </html>

@@ -8,7 +8,7 @@ var bendingSprings = true;
 
 // Similar to coefficient of friction
 // 0 = frictionless, 1 = cloth sticks in place
-var friction = 0.9;
+var friction = 0.6;
 
 var particleDistance=10 //how much distance between particles
 var fabricLength = 500; // sets the length of the cloth in both dimensions
@@ -35,16 +35,18 @@ var restDistanceB = 2;
 var restDistanceS = Math.sqrt(2);
 
 // Damping coefficient for integration
-var DAMPING = 0.03;
+var DAMPING = 0.05;
 
 // Mass of each particle in the cloth
 var MASS = 0.1;
 
-// Acceleration due to the gravity, scaled up experimentally for effect
-var GRAVITY = 9.8 * 140;
+// Acceleration due to the gravity, scaled up because distance in cm
+var GRAVITY = 9.8 * 100;
 
 //SpringConstant of Cloth. TODO: move it to cloth instead of everything
-var springConstant=2000;
+var springEStiffness=20000;
+var springBStifness=4000;
+var springSStiffness=20000; 
 
 // The timestep (or deltaT used in integration of the equations of motion)
 // Smaller values result in a more stable simulation, but becomes slower.
@@ -71,10 +73,11 @@ function plane(width, height, positionHeight) {
 }
 
 /***************************** CONSTRAINT *****************************/
-function Constraint(p1, p2, distance) {
+function Constraint(p1, p2, distance, springStiffness) {
   this.p1 = p1; // Particle 1
   this.p2 = p2; // Particle 2
   this.distance = distance; // Desired distance
+  this.springConstant=springStiffness/distance;
 }
 
 Constraint.prototype.enforce = function() {
@@ -126,7 +129,7 @@ Constraint.prototype.enforce = function() {
     //process.exit(0); 
   }  */
   
-  var forceScalar = distanceFromRest*springConstant;
+  var forceScalar = distanceFromRest*this.springConstant;
 
   var forceDirected = v12.clone().normalize().multiplyScalar(forceScalar);
 
@@ -225,13 +228,13 @@ function Cloth(w, h, l, heightSpawn) {
     for (u = 0; u <= w; u++) {
       if (v < h && (u == 1 || u == w)) {
         constraints.push(
-          new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance)
+          new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,springEStiffness)
         );
       }
 
       if (u < w && (v == 0 || v == h)) {
         constraints.push(
-          new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance)
+          new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance,springEStiffness)
         );
       }
     }
@@ -244,10 +247,10 @@ function Cloth(w, h, l, heightSpawn) {
     for (v = 0; v < h; v++) {
       for (u = 0; u < w; u++) {
             constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance)
+              new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,springEStiffness)
             );
           constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance)
+            new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance, springEStiffness)
           );
       }
     }
@@ -262,11 +265,11 @@ function Cloth(w, h, l, heightSpawn) {
       for (u = 0; u <= w; u++) {
           if (u < w && v < h)
             constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u + 1, v + 1)], restDistance * restDistanceS)
+              new Constraint(particles[index(u, v)], particles[index(u + 1, v + 1)], restDistance * restDistanceS, springSStiffness)
             );
           if (u < w && v > 0)
             constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u + 1, v - 1)], restDistance * restDistanceS)
+              new Constraint(particles[index(u, v)], particles[index(u + 1, v - 1)], restDistance * restDistanceS, springSStiffness)
             );
       }
     }
@@ -281,11 +284,11 @@ function Cloth(w, h, l, heightSpawn) {
       for (u = 0; u <= w; u++) {
         if (v < h-1)
           constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u , v + 2)], restDistance * restDistanceB)
+            new Constraint(particles[index(u, v)], particles[index(u , v + 2)], restDistance * restDistanceB, springBStifness)
           );
         if (u < w-1)
           constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u + 2, v)], restDistance * restDistanceB)
+            new Constraint(particles[index(u, v)], particles[index(u + 2, v)], restDistance * restDistanceB, springBStifness)
           );
       }
     }
