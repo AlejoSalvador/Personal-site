@@ -221,9 +221,11 @@ function showWireframe(flag) {
   poleMaterial.wireframe = flag;
   for (var i=0; i<clothObjectArray.length;i++){
     clothObjectArray[i].cloth.clothMaterial.wireframe = flag;
+    clothObjectArray[i].material.wireframe=flag;
   }
   for (var i=0; i<  clothObjectEditionArray.length;i++){
     clothObjectEditionArray[i].cloth.clothMaterial.wireframe = flag;
+    clothObjectEditionArray[i].material.wireframe=flag;
   }
 
 

@@ -1,10 +1,10 @@
-function Particle(x, y, z, mass, cloth=true, normalParticle=undefined) {
+function Particle(x, y, z, mass, initialCloth=true, normalParticle=undefined) {
   //cloth should be false if positions are going to be directly given
   this.position = new THREE.Vector3(); // position
   this.previous = new THREE.Vector3(); // previous
   this.original = new THREE.Vector3(); // original
 
-  if (cloth)
+  if (initialCloth)
   {
     var initParemerizedPositionHeight=plane(fabricLength, fabricLength, z);
     initParemerizedPositionHeight(x, y, this.position);
@@ -15,7 +15,11 @@ function Particle(x, y, z, mass, cloth=true, normalParticle=undefined) {
     this.position = new THREE.Vector3(x,y,z); // position
     this.previous = new THREE.Vector3(x,y,z); // previous
     this.original = new THREE.Vector3(x,y,z); // original
-    this.normal=normalParticle;
+    if (normalParticle!==undefined)
+    {
+      this.normal=normalParticle;
+    }
+ 
   }
 
   this.lockPosition=false;

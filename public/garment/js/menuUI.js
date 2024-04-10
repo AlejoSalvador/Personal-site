@@ -11,7 +11,7 @@ var wrapper = document.querySelector(".wrapper");
 
 li_items.forEach((li_item)=>{
 	li_item.addEventListener("mouseenter", ()=>{
-
+			mouseCurrentlyInterface=true;
 
 			li_item.closest(".wrapper").classList.remove("hover_collapse");
       //I have already added style information about hover_collapse
@@ -24,7 +24,8 @@ li_items.forEach((li_item)=>{
 
 li_items.forEach((li_item)=>{
 	li_item.addEventListener("mouseleave", ()=>{
-
+		
+		mouseCurrentlyInterface=false;
 			li_item.closest(".wrapper").classList.add("hover_collapse");
       //Hover Collapse will be applied again when the mouse is removed
 
