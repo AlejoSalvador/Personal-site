@@ -65,7 +65,7 @@ var heightSpawn=125;
 
 // The cloth object
 var cloth = new Cloth(xSegs, ySegs, fabricLength, heightSpawn);
-var clothEdition  = new Cloth(xSegs, ySegs, fabricLength, heightSpawn);
+var clothEdition  = new Cloth(xSegs, ySegs, fabricLength, heightSpawn,true);
 
 // Property of the ground floor in the scene
 var GROUND_Y = -249;
@@ -196,7 +196,15 @@ function init() {
   clothGeometryAux.dynamic = true;
 
   cloth.clothGeometry=clothGeometryAux;
-  cloth.clothMaterial=clothMaterialAux
+  cloth.clothMaterial=clothMaterialAux;
+
+  cloth.quads=[];
+  for (let i=0;i<clothGeometryAux.faces.length/2;i++)
+  {
+    cloth.quads.push([2*i,2*i+1]);
+  }
+  cloth.triangs=[];
+
 
   
   // more stuff needed for the texture
@@ -228,7 +236,7 @@ function init() {
 
   clothObjectArray.push(clothObject);
 
-  //HERE I ADD clothObjectEdition
+  //HERE I ADD clothObjectEdition. It is the copy used on the editor
   //TODO:Fixing the fact that particles are the same and this bring lots of problems. I should be creating a neww identical cloth
 
   var clothMaterialEditionAux = new THREE.MeshBasicMaterial({
@@ -246,6 +254,14 @@ function init() {
   
   clothEdition.clothGeometry=clothGeometryEditionAux;
   clothEdition.clothMaterial=clothMaterialEditionAux;
+
+  clothEdition.quads=[];
+  for (let i=0;i<clothGeometryEditionAux.faces.length/2;i++)
+  {
+    clothEdition.quads.push([2*i,2*i+1]);
+  }
+  clothEdition.triangs=[];
+
 
   clothObjectEdition = new THREE.Mesh(clothGeometryEditionAux, clothMaterialEditionAux);
   clothObjectEdition.position.set(0, 0, 0);
@@ -669,168 +685,7 @@ function scrollWhell(event){
   }  
 }
 
-// Determine the intersection point of two line segments
-// Return FALSE if the lines don't intersect
-//the second line given should always be the one that indicates the cut since UB is used to know how far along it the current vertex is
-function segmentIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
 
-  // Check if none of the lines are of length 0
-	if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
-		return [false,false]
-	}
-
-	denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
-
-  // Lines are parallel
-	if (denominator === 0) {
-		return [false,false]
-	}
-
-	let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-	let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-
-  // is the intersection along the segments
-	if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
-		return [false,false]
-	}
-
-  // Return a object with the x and y coordinates of the intersection
-	let x = x3 + ub * (x4 - x3)
-	let z = y3 + ub * (y4 - y3)
-
-  //ua is returned to get the position along the segment we are located along
-	return [new THREE.Vector3(x,0,z), ub]
-}
-
-function cutCloth(){
-  for (var i=0;i<clothObjectEditionArray.length;i++)
-  {
-    //first step is cutting the constrains
-    let filteredConstraintsEdition=[];
-    let filteredConstraints=[];
-    for (var j=0;j<clothObjectEditionArray[i].cloth.constraints.length;j++)
-    {
-      var position1=clothObjectEditionArray[i].cloth.constraints[j].p1.position;
-      var position2=clothObjectEditionArray[i].cloth.constraints[j].p2.position;
-
-      //TODO:Detect if line interesect with the other line. If they do remove the constrains. To do so reconstruct it with the elements on the same side. for both version of the cloth
-      //looking to preserve equivalence between I th element in a cloth and ith element in the edition version of it. Do the same thing with traingle removal 
-      if (segmentIntersect(position1.x, position1.z, position2.x, position2.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)[0]==false)
-      {
-
-        filteredConstraintsEdition.push(clothObjectEditionArray[i].cloth.constraints[j]);
-        filteredConstraints.push(clothObjectArray[i].cloth.constraints[j]);
-
-      }
-    }
-    clothObjectEditionArray[i].cloth.constraints=filteredConstraintsEdition;
-    clothObjectArray[i].cloth.constraints=filteredConstraints;
-
-    //second step is cutting the triangles
-    let filteredTriangles=[];
-    let filteredTrianglesEdition=[];
-    let filteredTrianglesUVS=[];
-    let filteredTrianglesEditionUVS=[];
-
-    newVerticesEdition=[...clothObjectEditionArray[i].cloth.clothGeometry.vertices];
-    newVertices=[...clothObjectArray[i].cloth.clothGeometry.vertices];
-
-    const unfilteredTrianglesEdition=clothObjectEditionArray[i].cloth.clothGeometry.faces;
-    const unfilteredTriangles=clothObjectArray[i].cloth.clothGeometry.faces;
-    for (var j=0;j<clothObjectEditionArray[i].cloth.clothGeometry.faces.length;j++)
-    {
-      vertex1=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].a];
-      vertex2=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].b];
-      vertex3=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].c];
-
-      let line1Intersection=segmentIntersect(vertex1.x, vertex1.z, vertex2.x, vertex2.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)[0];
-      let line2Intersection=segmentIntersect(vertex1.x, vertex1.z, vertex3.x, vertex3.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)[0];
-      let line3Intersection=segmentIntersect(vertex2.x, vertex2.z, vertex3.x, vertex3.z, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)[0];
-
-
-      if ((line1Intersection===false)&&
-      (line2Intersection===false)&&
-      (line3Intersection===false))
-      {
-        filteredTrianglesEdition.push(unfilteredTrianglesEdition[j]);
-        filteredTriangles.push(clothObjectEditionArray[i].cloth.clothGeometry.faces[j]);
-
-        filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-        filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-
-      }
-    }
-   
-
-    //TODO: Chequear que no ocurran memory leaks
-
-    let newGeometryEdition = new THREE.Geometry();
-
-    // itemSize = 3 because there are 3 values (components) per vertex
-
-    newGeometryEdition.vertices=newVerticesEdition;
-
-    newGeometryEdition.faces=filteredTrianglesEdition;
-
-    newGeometryEdition.faceVertexUvs[0]=filteredTrianglesEditionUVS;
-
-
-    const meshEdition = new THREE.Mesh( newGeometryEdition, clothObjectEditionArray[i].cloth.clothMaterial.clone() );
-    meshEdition.position.set(0,0,0);
-    meshEdition.rotation.x=-Math.PI/2;
-    meshEdition.dynamic=true;
-
-
-
-    let clothEdition=clothObjectEditionArray[i].cloth;
-    clothEdition.clothGeometry=newGeometryEdition;
-
-
-    meshEdition.cloth=clothEdition;
-
-    clothObjectEditionArray[i].cloth.clothGeometry.dispose();
-
-    sceneEdition.remove(clothObjectEditionArray[i]);
-    clothObjectEditionArray[i]=meshEdition;
-    sceneEdition.add(meshEdition);
-
-
-    let newGeometry = new THREE.Geometry();
-
-    // itemSize = 3 because there are 3 values (components) per vertex
-
-    newGeometry.vertices=newVertices;
-
-    newGeometry.faces=filteredTrianglesEdition;
-
-    newGeometry.faceVertexUvs[0]=filteredTrianglesUVS; 
-
-
-    const mesh = new THREE.Mesh( newGeometry, clothObjectArray[i].cloth.clothMaterial.clone() );
-    mesh.position.set(0,0,0);
-
-    mesh.dynamic=true;
-
-    mesh.castShadow=true;
-
-    let clothView=clothObjectArray[i].cloth;
-    clothView.clothGeometry=newGeometry;
-
-
-
-    mesh.cloth=clothView;
-
-    clothObjectArray[i].cloth.clothGeometry.dispose();
-
-    scene.remove(clothObjectArray[i]);
-    clothObjectArray[i]=mesh;
-    scene.add(mesh);
-
-
-
-  }
-
-}
 
 //addClothPiece() is used when we want to add an additional cloth piece
 
@@ -948,7 +803,7 @@ function restartCloth() {
       randX = Math.round(Math.random() * xSegs);
       randY = Math.round(Math.random() * ySegs);
       randomPoints.push([randX, randY]);
-      console.log([randX, randY]);
+      //console.log([randX, randY]);
     }
   }
 

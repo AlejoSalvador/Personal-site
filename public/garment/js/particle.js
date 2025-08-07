@@ -26,7 +26,166 @@ function Particle(x, y, z, mass, initialCloth=true, normalParticle=undefined) {
   this.netExternalForce = new THREE.Vector3(); // net force acting on particle
   this.netConstrainsForce = new THREE.Vector3();
   this.mass = mass; // mass of the particle
+
+  this.structuralConstraints=[];
+  this.shearConstraints=[];
+  this.bendConstraints=[];
+
+  //constraints are going to be always store in both particles it connect. Therefore when adding forces they should have half the power
+
+  this.indexArray;
+
 }
+
+//Add to array should be used whenever I add to an array to remember to update the indexArray whenever I update it. DO NOT ADD DIRECTLY
+Particle.prototype.pushToArray=function(arrayInput){
+  this.indexArray=arrayInput.length;
+  arrayInput.push(this);
+  return arrayInput;
+};
+
+Particle.prototype.addSpring=function(constraint, springType){
+
+  if (springType==="structural")
+  {
+    this.structuralConstraints.push(constraint);
+  }else if (springType==="shear")
+  {
+    this.shearConstraints.push(constraint);
+  }else if (springType==="bending")
+  {
+    this.bendConstraints.push(constraint);
+  }else
+  {
+    console.error("wrongCostraintType at creating constraint");
+  }
+
+};
+
+//Its important that if particleConnected is itself it will return false If the particle is not there false will be returned
+Particle.prototype.returnConstraint = function(particleConnected,springType){
+
+  if (this===particleConnected)
+  {
+    return false;
+  }
+
+  if (springType==="structural")
+  {
+    
+    for (var i=0;i<this.structuralConstraints.length;i++)
+    {
+      if ((this.structuralConstraints[i].p1===particleConnected)||(this.structuralConstraints[i].p2===particleConnected))
+      {
+        return this.structuralConstraints[i];
+      }
+    }
+
+  }else if (springType==="shear")
+  {
+    for (var i=0;i<this.shearConstraints.length;i++)
+    {
+      if ((this.shearConstraints[i].p1===particleConnected)||(this.shearConstraints[i].p2===particleConnected))
+      {
+        return this.shearConstraints[i];
+      }
+    }
+
+  }else if (springType==="bending")
+  {
+    for (var i=0;i<this.bendConstraints.length;i++)
+    {
+      if ((this.bendConstraints[i].p1===particleConnected)||(this.bendConstraints[i].p2===particleConnected))
+      {
+        return this.bendConstraints[i];
+      }
+    }
+
+  }else
+  {
+    console.error("wrongCostraintType at finding constraint");
+  }
+
+  return false;
+
+};
+
+//do not use. USE THE ONE IN CONSTRAINT
+Particle.prototype.removeSpring = function(particleConnected,springType){
+
+  if (springType==="structural")
+  {
+    
+    constraintsList=[];
+    for (var i=0;i<this.structuralConstraints.length;i++)
+    {
+      if ((this.structuralConstraints[i].p1!==particleConnected)&&(this.structuralConstraints[i].p2!==particleConnected))
+      {
+        constraintsList.push(this.structuralConstraints[i]);
+      }
+    }
+    this.structuralConstraints=constraintsList;
+
+  }else if (springType==="shear")
+  {
+    constraintsList=[];
+    for (var i=0;i<this.shearConstraints.length;i++)
+    {
+      if ((this.shearConstraints[i].p1!==particleConnected)&&(this.shearConstraints[i].p2!==particleConnected))
+      {
+        constraintsList.push(this.shearConstraints[i]);
+      }
+    }
+    this.shearConstraints=constraintsList;
+
+  }else if (springType==="bending")
+  {
+    constraintsList=[];
+    for (var i=0;i<this.bendConstraints.length;i++)
+    {
+      if ((this.bendConstraints[i].p1!==particleConnected)&&(this.bendConstraints[i].p2!==particleConnected))
+      {
+        constraintsList.push(this.bendConstraints[i]);
+      }
+    }
+    this.bendConstraints=constraintsList;
+
+  }else
+  {
+    console.error("wrongCostraintType at deleting constraint");
+  }
+
+};
+
+Particle.prototype.enforceConstraints = function() {
+
+  if (structuralSprings)
+  {
+    for (var i=0;i<this.structuralConstraints.length;i++)
+      {
+        this.structuralConstraints[i].enforce();
+      }
+  }
+
+  if (shearSprings)
+  {
+    for (var i=0;i<this.shearConstraints.length;i++)
+        {
+          this.shearConstraints[i].enforce();
+        }
+  }
+    
+  if (bendingSprings)
+  {
+    for (var i=0;i<this.bendConstraints.length;i++)
+    {
+      this.bendConstraints[i].enforce();
+    }
+  }
+    
+
+};
+
 
 Particle.prototype.lockTo = function(x,y) {
   this.position.set(x,125,y);

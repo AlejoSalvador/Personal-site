@@ -265,9 +265,9 @@ function handleBetweenClothIntersection(){
       
       var bucket=Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.x+250)))/(500/rowOfBuckets))*rowOfBuckets*rowOfBuckets+Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.y+250)))/(500/rowOfBuckets))*rowOfBuckets+Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.z+250)))/(500/rowOfBuckets));
       if (!Array.isArray(particlesClothPosBucketArray[bucket])){
-        console.log("bucket",bucket);
-        console.log("clothObjectArray[i].cloth.particles[j].position",clothObjectArray[i].cloth.particles[j].position);
-        console.log("clothObjectArray[i].cloth.particles[j]",clothObjectArray[i].cloth.particles[j]);
+        //console.log("bucket",bucket);
+        //console.log("clothObjectArray[i].cloth.particles[j].position",clothObjectArray[i].cloth.particles[j].position);
+        //console.log("clothObjectArray[i].cloth.particles[j]",clothObjectArray[i].cloth.particles[j]);
       }//TODO:FIXING THIS bucket NaN when restarting. This means position deleted at restart
       particlesClothPosBucketArray[bucket].push(clothObjectArray[i].cloth.particles[j]);
     }
@@ -360,9 +360,9 @@ function handleMeshClothIntersection(){
       
       var bucket=Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.x+250)))/(500/rowOfBuckets))*rowOfBuckets*rowOfBuckets+Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.y+250)))/(500/rowOfBuckets))*rowOfBuckets+Math.floor(Math.min(499,Math.max(0,(clothObjectArray[i].cloth.particles[j].position.z+250)))/(500/rowOfBuckets));
       if (!Array.isArray(particlesClothPosBucketArray[bucket])){
-        console.log("bucket",bucket);
-        console.log("clothObjectArray[i].cloth.particles[j].position",clothObjectArray[i].cloth.particles[j].position);
-        console.log("clothObjectArray[i].cloth.particles[j]",clothObjectArray[i].cloth.particles[j]);
+        //console.log("bucket",bucket);
+        //console.log("clothObjectArray[i].cloth.particles[j].position",clothObjectArray[i].cloth.particles[j].position);
+        //console.log("clothObjectArray[i].cloth.particles[j]",clothObjectArray[i].cloth.particles[j]);
       }//TODO:FIXING THIS bucket NaN when restarting. This means position deleted at restart. LOOKS FIXED. REMOVING THIS IF IT DOES NOT POP UP AGAIN
       particlesClothPosBucketArray[bucket].push(clothObjectArray[i].cloth.particles[j]);
     }

@@ -73,18 +73,55 @@ function plane(width, height, positionHeight) {
 }
 
 /***************************** CONSTRAINT *****************************/
-function Constraint(p1, p2, distance, springStiffness) {
+function Constraint(p1, p2, distance, springType) {
+
+
   this.p1 = p1; // Particle 1
   this.p2 = p2; // Particle 2
   this.distance = distance; // Desired distance
-  this.springConstant=springStiffness/distance;
+  this.springType=springType;
+
+  if (springType==="structural")
+  {
+    this.springConstant=springEStiffness/distance;
+  }else if (springType==="shear")
+  {
+    this.springConstant=springBStifness/distance;
+  }else if (springType==="bending")
+  {
+    this.springConstant=springSStiffness/distance;
+  }else
+  {
+    console.error("wrongCostraintType at creating constraint");
+  }
 }
+
+function addConstraint(p1, p2, distance, springType) {
+
+  var constraint= new Constraint(p1, p2, distance, springType);
+  p1.addSpring(constraint,springType);
+  p2.addSpring(constraint,springType);
+
+  //this calls the functions in particle to place the pointer to the constraint arrays inside the particle 
+  //remember the key trick of using the structural springs to know where to draw bending spring. If I had a bending from A to B. I can search the structural spring from B to C 
+  //where C is inside the same quad with A. With that information I know that the intersection with the cut along the line A->B (lets call it D) will be used to make bending D->C
+  //this works with triang or any shape where there are cuts. It could probably be done directly at the intersection level grouped to prevent repetion
+
+
+  return constraint;
+}
+
+Constraint.prototype.removeSpring= function()
+{
+  this.p1.removeSpring(this.p2,this.springType);
+  this.p2.removeSpring(this.p1,this.springType);
+};
 
 Constraint.prototype.enforce = function() {
   // ----------- CODE BEGIN ------------
   // Enforce this constraint by applying a correction to the two particles'
   // positions based on their current distance relative to their desired rest
-  // distance.
+  // distance. Since the constrains are applied 2 times. One time per particle I need to apply half the force
   var v12 = (this.p1.position.clone()).sub(this.p2.position);
   var distanceFromRest =  (this.distance-v12.length());
  /*   if (distanceFromRest<-100){
@@ -129,7 +166,7 @@ Constraint.prototype.enforce = function() {
     //process.exit(0); 
   }  */
   
-  var forceScalar = distanceFromRest*this.springConstant;
+  var forceScalar = distanceFromRest*this.springConstant/2; //applying half the force
 
   var forceDirected = v12.clone().normalize().multiplyScalar(forceScalar);
 
@@ -193,7 +230,7 @@ Constraint.prototype.enforce = function() {
 
 
 
-function Cloth(w, h, l, heightSpawn) {
+function Cloth(w, h, l, heightSpawn, edition=false) {
   // Internal helper function for computing 1D index into particles list
   // from a particle's 2D index
   function index(u, v) {
@@ -212,92 +249,86 @@ function Cloth(w, h, l, heightSpawn) {
   // Information about the geometry of the cloth
   var clothGeometry;
 
-  // Empty initial lists
-  let particles = [];
-  let constraints = [];
+  if (edition===false)
+  {
+    // Empty initial lists
+    let particles = [];
 
-  // Create particles
-  for (v = 0; v <= h; v++) {
-    for (u = 0; u <= w; u++) {
-      particles.push(new Particle(u / w, v / h, heightSpawn, MASS));
-    }
-  }
-
-  // Edge constraints
-  for (v = 0; v <= h; v++) {
-    for (u = 0; u <= w; u++) {
-      if (v < h && (u == 1 || u == w)) {
-        constraints.push(
-          new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,springEStiffness)
-        );
-      }
-
-      if (u < w && (v == 0 || v == h)) {
-        constraints.push(
-          new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance,springEStiffness)
-        );
-      }
-    }
-  }
-
-  // Structural constraints
-  if (structuralSprings) {
-    // ----------- CODE BEGIN ------------
-    // Add structural constraints between particles in the cloth to the list of constraints.
-    for (v = 0; v < h; v++) {
-      for (u = 0; u < w; u++) {
-            constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,springEStiffness)
-            );
-          constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance, springEStiffness)
-          );
-      }
-    }
-    // ----------- CODE END ------------
-  }
-
-  // Shear constraints
-  if (shearSprings) {
-    // -----------CODE BEGIN ------------
-    // Add shear constraints between particles in the cloth to the list of constraints.
+    // Create particles
     for (v = 0; v <= h; v++) {
       for (u = 0; u <= w; u++) {
-          if (u < w && v < h)
-            constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u + 1, v + 1)], restDistance * restDistanceS, springSStiffness)
-            );
-          if (u < w && v > 0)
-            constraints.push(
-              new Constraint(particles[index(u, v)], particles[index(u + 1, v - 1)], restDistance * restDistanceS, springSStiffness)
-            );
+        (new Particle(u / w, v / h, heightSpawn, MASS)).pushToArray(particles);
       }
     }
-    // ----------- CODE END ------------
-  }
 
-  // Bending constraints
-  if (bendingSprings) {
-    // ----------- CODE BEGIN ------------
-    // Add bending constraints between particles in the cloth to the list of constraints.
+    // Edge structural constraints
     for (v = 0; v <= h; v++) {
       for (u = 0; u <= w; u++) {
-        if (v < h-1)
-          constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u , v + 2)], restDistance * restDistanceB, springBStifness)
-          );
-        if (u < w-1)
-          constraints.push(
-            new Constraint(particles[index(u, v)], particles[index(u + 2, v)], restDistance * restDistanceB, springBStifness)
-          );
+        if (v < h && (u == 1 || u == w)) {
+            addConstraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,"structural");
+        }
+
+        if (u < w && (v == 0 || v == h)) {
+            addConstraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance,"structural");
+          
+        }
       }
     }
+
+    // Structural constraints
+    if (true) {
+      // ----------- CODE BEGIN ------------
+      // Add structural constraints between particles in the cloth to the list of constraints.
+      for (v = 0; v < h; v++) {
+        for (u = 0; u < w; u++) {
+            addConstraint(particles[index(u, v)], particles[index(u, v + 1)], restDistance,"structural");
+          
+            addConstraint(particles[index(u, v)], particles[index(u + 1, v)], restDistance, "structural");
+            
+        }
+      }
+
+    }
+  
+    // ----------- CODE END ------------
+  
+
+    // Shear constraints
+    if (true) {
+      // -----------CODE BEGIN ------------
+      // Add shear constraints between particles in the cloth to the list of constraints.
+      for (v = 0; v <= h; v++) {
+        for (u = 0; u <= w; u++) {
+            if (u < w && v < h)
+                addConstraint(particles[index(u, v)], particles[index(u + 1, v + 1)], restDistance * restDistanceS, "shear");
+            if (u < w && v > 0)
+                addConstraint(particles[index(u, v)], particles[index(u + 1, v - 1)], restDistance * restDistanceS, "shear");
+        }
+      }
+      // ----------- CODE END ------------
+    }
+
+    // Bending constraints
+    if (true) {
+      // ----------- CODE BEGIN ------------
+      // Add bending constraints between particles in the cloth to the list of constraints.
+      for (v = 0; v <= h; v++) {
+        for (u = 0; u <= w; u++) {
+          if (v < h-1)
+              addConstraint(particles[index(u, v)], particles[index(u , v + 2)], restDistance * restDistanceB, "bending")  ; 
+          if (u < w-1)
+              addConstraint(particles[index(u, v)], particles[index(u + 2, v)], restDistance * restDistanceB, "bending");
+        }
+      }
+
+        // Store the particles lists into the cloth object
+    this.particles = particles;
     // ----------- CODE END ------------
   }
 
-  // Store the particles and constraints lists into the cloth object
-  this.particles = particles;
-  this.constraints = constraints;
+}
+
+
 }
 
 Cloth.prototype.applyGravity = function() {
@@ -394,13 +425,19 @@ Cloth.prototype.handleCollisions = function() {
 };
 
 Cloth.prototype.enforceConstraints = function() {
+  /*
   let constraints = this.constraints;
-  // ----------- CODE BEGIN ------------
   // Enforce all constraints in the cloth.
   for (var i = 0; i < constraints.length; i++){
     constraints[i].enforce();
   }
-  // -----------CODE END ------------
+  */
+
+  let particles = this.particles;
+   for (var i = 0; i < particles.length; i++){
+    particles[i].enforceConstraints();
+  }
+
 };
 /*
 Cloth.prototype.handleSelfIntersections = function() {
