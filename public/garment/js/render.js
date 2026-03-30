@@ -87,6 +87,40 @@ const worldPosition = new THREE.Vector3();
 const inverseMatrix=new THREE.Matrix4();
 const offset=new THREE.Vector3();
 
+cutListClothArray=[];
+class Cut {
+  constructor(currentClothID,startCut,cutEnd) {
+    this.countID = cutListClothArray[currentClothID].length;
+    this.cutStart=startCut;
+    this.cutEnd=cutEnd;
+    this.listOfIntersectionSorted=[];
+    cutListClothArray[currentClothID].push(this);
+  }
+  getCountID()
+  {
+    return this.countID;
+  }
+  getCutStart()
+  {
+    return this.cutStart;
+  }
+  getCutEnd()
+  {
+    return this.cutEnd;
+  }
+  getListOfIntersectionSorted()
+  {
+    return this.listOfIntersectionSorted;
+  }
+  setListOfIntersectionSorted(array)
+  {
+    if (Array.isArray(array))
+    {
+      this.listOfIntersectionSorted=array;
+    }
+  }
+}
+
 
 init();
 
@@ -235,6 +269,7 @@ function init() {
   } );
 
   clothObjectArray.push(clothObject);
+  cutListClothArray.push([]);
 
   //HERE I ADD clothObjectEdition. It is the copy used on the editor
   //TODO:Fixing the fact that particles are the same and this bring lots of problems. I should be creating a neww identical cloth
@@ -758,6 +793,9 @@ function addClothPiece(){
     scene.add(clothObjectAux); // add cloth to the scene
 
     clothObjectArray.push(clothObjectAux);
+    cutListClothArray.push([]);
+
+    //TODO: remove all objects when removing cloth
 }
 
 // restartCloth() is used when we change a fundamental cloth property with a slider
@@ -767,6 +805,7 @@ function restartCloth() {
   for (let i=0;i<clothObjectArray.length;i++)
   {
     scene.remove(clothObjectArray[i]);
+
 
 
     var clothAux = new Cloth(xSegs, ySegs, fabricLength, clothObjectArray[i].cloth.heightSpawn);
@@ -791,6 +830,7 @@ function restartCloth() {
     scene.add(clothObjectAux); // adds the cloth to the scene
 
     clothObjectArray[i]=clothObjectAux;
+    cutListClothArray=[];
 
   }
  
