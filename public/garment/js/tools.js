@@ -768,6 +768,7 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
          //I decided to make use of  .containsPoint that is contained in threeJS
 
 
+         
 
 
          let insideQuad=false;
@@ -784,11 +785,17 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
                 {
                   
                   const myTriangle =unfilteredTriangles[intersectionsOrderedWithoutRepetition[0].figure[k][l]];
-                  const triangleToTest = new THREE.Triangle(myTriangle.a, myTriangle.b, myTriangle.c);
+                  const triangleToTest = new THREE.Triangle(clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.a], clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.b], clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.c]);
+
                   
+                
+                  //console.log("triangleToTest",triangleToTest);
+                  //console.log("cutStartPosition3D",cutStartPosition3D);
+                 
 
                   if (triangleToTest.containsPoint(cutStartPosition3D)) //TODO: remember that contains point can break in edge cases because of floating point precision
                   {
+                    
                     insideQuad=true;
                     extremeBorderIndex=k;
                   }
@@ -798,10 +805,11 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
          }
 
+
          //actually inside quad works when inside a single triangle so later I need to check if it is a quad
         if (insideQuad)
         {
-          
+             
          
           const figureToCut=intersectionsOrderedWithoutRepetition[0].figure[extremeBorderIndex];
           const centralVertexPosition=currentCut.getCutStart();
@@ -816,7 +824,7 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
               const currentTriangNumber1=figureToCut[0];
               const currentTriangNumber2=figureToCut[1];
     
-              const edgeOfIntersection1=intersectionEdge;
+              const edgeOfIntersection1=intersectionEdge[0];
 
               const newVertex1Edge1Index=intersectionsWithEdge[1];
               const newVertex2Edge1Index=intersectionsWithEdge[0];
@@ -828,9 +836,14 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
               const setSecondTriang=new Set([figureTriangNumber2.a, figureTriangNumber2.b, figureTriangNumber2.c]);
 
               const setQuad=setFirstTriang.union(setSecondTriang).values();
-             
 
-              const vertexQuad=[newVertices[setQuad.next().value],newVertices[setQuad.next().value],newVertices[setQuad.next().value],newVertices[setQuad.next().value]];
+              console.log("setFirstTriang",setFirstTriang);
+              console.log("setSecondTriang",setSecondTriang);
+              console.log("setQuad",setQuad);
+             
+              const vertexQuadIndex=[setQuad.next().value,setQuad.next().value,setQuad.next().value,setQuad.next().value];
+              const vertexQuad=[newVertices[vertexQuadIndex[0]],newVertices[vertexQuadIndex[1]],newVertices[vertexQuadIndex[2]],newVertices[vertexQuadIndex[3]]];
+              
      
 
               //TODO:making the proportion work to get the particle position of the new Vertex. A trick do so is just placing it somewhere inside the quad and letting the 
@@ -859,7 +872,98 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
             //with the particles alreaady located I should place the constrains that go with it
 
 
-            //TODO TOMORROW: agregar los nuevos triangulos que aparecen con el corte y los nuevos constraints estructurales corespondientes a los nuevos triangulos que deba añadir
+            
+
+              let startLoopVertex=-1;
+              for (let vertInQuad=0;vertInQuad<4;vertInQuad++)
+              {
+
+                if (((vertexQuadIndex[vertInQuad]===edgeOfIntersection1[0])&&(vertexQuadIndex[(vertInQuad+1)%4]===edgeOfIntersection1[1]))||((vertexQuadIndex[vertInQuad]===edgeOfIntersection1[1])&&(vertexQuadIndex[(vertInQuad+1)%4]===edgeOfIntersection1[0])))
+                  {
+                    startLoopVertex=vertInQuad;
+                  }  
+              }
+
+              
+
+              const orderedQuadIndex=[vertexQuadIndex[startLoopVertex],vertexQuadIndex[(startLoopVertex+1)%4],vertexQuadIndex[(startLoopVertex+2)%4],vertexQuadIndex[(startLoopVertex+3)%4]];
+              
+              const symmetricDifference = (a, b) => new Set([...[...a].filter(x => !b.has(x)), ...[...b].filter(x => !a.has(x))]);
+              const differenceElements=symmetricDifference(setSecondTriang,setFirstTriang).values();
+              const diagonal1=differenceElements.next().value;
+              const diagonal2=differenceElements.next().value;
+
+              if (diagonal1===orderedQuadIndex[0])
+              {
+                if (diagonal2===orderedQuadIndex[3])
+                {
+                  let aux=orderedQuadIndex[2];
+                  orderedQuadIndex[2]=orderedQuadIndex[3];
+                  orderedQuadIndex[3]=aux;
+
+                }
+              }else if (diagonal1===orderedQuadIndex[1])
+              {
+                 if (diagonal2===orderedQuadIndex[2])
+                {
+                  let aux=orderedQuadIndex[2];
+                  orderedQuadIndex[2]=orderedQuadIndex[3];
+                  orderedQuadIndex[3]=aux;
+
+                }
+                
+              } else if (diagonal2===orderedQuadIndex[0])
+              {
+                if (diagonal1===orderedQuadIndex[3])
+                {
+                  let aux=orderedQuadIndex[2];
+                  orderedQuadIndex[2]=orderedQuadIndex[3];
+                  orderedQuadIndex[3]=aux;
+                }
+                
+              }else if (diagonal2===orderedQuadIndex[1])
+              {
+                if (diagonal1===orderedQuadIndex[2])
+                {
+                  let aux=orderedQuadIndex[2];
+                  orderedQuadIndex[2]=orderedQuadIndex[3];
+                  orderedQuadIndex[3]=aux;
+                }
+                
+              }
+
+
+              console.log("orderedQuadIndex",orderedQuadIndex); 
+
+
+              let triangleClone1= new THREE.Face3(centralVertexIndex, newVertex1Edge1Index, orderedQuadIndex[1]);
+
+              filteredTriangles.push(triangleClone1);
+              filteredTriangs.push([filteredTriangles.length-1]);  
+
+              let triangleClone2= new THREE.Face3(centralVertexIndex, orderedQuadIndex[1], orderedQuadIndex[2]);
+
+              filteredTriangles.push(triangleClone2);
+              filteredTriangs.push([filteredTriangles.length-1]);  
+
+              let triangleClone3= new THREE.Face3(centralVertexIndex, orderedQuadIndex[2], orderedQuadIndex[3]);
+
+              filteredTriangles.push(triangleClone3);
+              filteredTriangs.push([filteredTriangles.length-1]);  
+
+              let triangleClone4= new THREE.Face3(centralVertexIndex, orderedQuadIndex[3], orderedQuadIndex[0]);
+
+              filteredTriangles.push(triangleClone4);
+              filteredTriangs.push([filteredTriangles.length-1]);  
+
+              let triangleClone5= new THREE.Face3(centralVertexIndex, orderedQuadIndex[0], newVertex2Edge1Index);
+
+              filteredTriangles.push(triangleClone5);
+              filteredTriangs.push([filteredTriangles.length-1]);  
+
+              //TODO mañana: agregar los nuevos constraints estructurales corespondientes a los nuevos triangulos que deba añadir. Recordar tambien los de shearing. 
+              // falta ocuparse de UV para todos
+              //I need to find the 2 vertexes of edges of intersection inside the quad and then followup the loop from there
 
 
 
