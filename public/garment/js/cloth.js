@@ -15,6 +15,9 @@ var fabricLength = 500; // sets the length of the cloth in both dimensions
 var xSegs = fabricLength/particleDistance; // how many particles wide is the cloth
 var ySegs = fabricLength/particleDistance; // how many particles tall is the cloth
 
+//to delete this debugging function should delete both in render.js, tools and here.
+var particleAdded=[];
+
 
 
 // Flag for whether cloth should avoid self intersections

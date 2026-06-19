@@ -2,14 +2,14 @@
 // Determine the intersection point of two line segments
 // Return FALSE if the lines don't intersect
 //the second line in the entry given should always be the one that indicates the cut since UB is used to know how far along it the current vertex is
-function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
+function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4 ) {
 
     // Check if none of the lines are of length 0
       if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
           return false
       }
   
-      denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
+      let denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
   
     // Lines are parallel
       if (denominator === 0) {
@@ -31,6 +31,904 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
     //ub is returned to get the position along the segment we are located along. its used for sorting
       return [ub, new THREE.Vector3(x,depth,z)]
   }
+
+  function segmentProjectedIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4 ) {
+
+    // Check if none of the lines are of length 0
+      if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+          return false
+      }
+  
+      let  denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
+  
+    // Lines are parallel
+      if (denominator === 0) {
+          return false;
+      }
+  
+      //let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+      let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+  
+    // Return a object with the x and y coordinates of the intersection
+      let x = x3 + ub * (x4 - x3)
+      let z = y3 + ub * (y4 - y3)
+  
+    //ub is returned to get the position along the segment we are located along. its used for sorting
+      return [ub, new THREE.Vector3(x,depth,z)]
+  }
+
+   function computingEdgeUVTriang (edge, edgeUV, triangles,triangNumber1,UVtriangles1){
+
+      for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
+      {
+        if (edge[iteratorEdge]===triangles[triangNumber1].a)
+        {
+          edgeUV[iteratorEdge]=UVtriangles1[0];
+        }else
+        if (edge[iteratorEdge]===triangles[triangNumber1].b)
+        {
+          edgeUV[iteratorEdge]=UVtriangles1[1];
+        }
+        else
+        if (edge[iteratorEdge]===triangles[triangNumber1].c)
+        {
+          edgeUV[iteratorEdge]=UVtriangles1[2];
+        }
+      }
+
+  }
+
+  function computingEdgeUVQuad (edge, edgeUV, triangles,triangNumber1, triangNumber2,UVtriangles1, UVtriangles2){
+
+    for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
+    {
+      if (edge[iteratorEdge]===triangles[triangNumber1].a)
+      {
+        edgeUV[iteratorEdge]=UVtriangles1[0];
+      }else
+      if (edge[iteratorEdge]===triangles[triangNumber1].b)
+      {
+        edgeUV[iteratorEdge]=UVtriangles1[1];
+      }
+      else
+      if (edge[iteratorEdge]===triangles[triangNumber1].c)
+      {
+        edgeUV[iteratorEdge]=UVtriangles1[2];
+      }else
+
+      if (edge[iteratorEdge]===triangles[triangNumber2].a)
+      {
+        edgeUV[iteratorEdge]=UVtriangles2[0];
+      }else
+      if (edge[iteratorEdge]===triangles[triangNumber2].b)
+      {
+        edgeUV[iteratorEdge]=UVtriangles2[1];
+      }
+      else
+      if (edge[iteratorEdge]===triangles[triangNumber2].c)
+      {
+        edgeUV[iteratorEdge]=UVtriangles2[2];
+      }
+    }
+
+  }
+
+function computingEdgeUVtriangle (edge, edgeUV, triangles,triang,UVtriangle){
+  for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
+  {
+    if (edge[iteratorEdge]===triangles[triang].a)
+    {
+      edgeUV[iteratorEdge]=UVtriangle[0];
+    }else
+    if (edge[iteratorEdge]===triangles[triang].b)
+    {
+      edgeUV[iteratorEdge]=UVtriangle[1];
+    }
+    else
+    if (edge[iteratorEdge]===triangles[triang].c)
+    {
+      edgeUV[iteratorEdge]=UVtriangle[2];
+    }
+
+  }
+}
+
+function computeProportionEdge(vertex1, vertex2, vertex3)
+{
+    if ((vertex1).x!==(vertex3).x)
+    {
+      return ((vertex1).x-vertex2.x)/((vertex1).x-(vertex3).x);
+    }else
+    {
+      return ((vertex1).z-vertex2.z)/((vertex1).z-(vertex3).z);     
+    }
+}
+
+function barycentricCoordinates(point, vertex1, vertex2, vertex3)
+{
+    const denominator = (vertex2.z - vertex3.z) * (vertex1.x - vertex3.x) + (vertex3.x - vertex2.x) * (vertex1.z - vertex3.z);
+
+        // Check if the triangle is degenerate (collinear vertices)
+    if (Math.abs(denominator) < 1e-9) {
+        return null; 
+    }
+
+    const alpha = ((vertex2.z - vertex3.z) * (point.x - vertex3.x) + (vertex3.x - vertex2.x) * (point.y - vertex3.z)) / denominator;
+    const beta = ((vertex3.z - vertex1.z) * (point.x - vertex3.x) + (vertex1.x - vertex3.x) * (point.y - vertex3.z)) / denominator;
+    const gamma = 1 - alpha - beta;
+    return [alpha, beta, gamma];
+}
+
+function isPointInTriangle(barycentricCoords) {
+    if (!barycentricCoords) return false;
+    const [l1, l2, l3] = barycentricCoords;
+    return l1 >= 0 && l2 >= 0 && l3 >= 0;
+}
+function extrapolateUVFromBarycentric(barycentricCoords, uv1, uv2, uv3) {
+
+    const [alpha, beta, gamma] = barycentricCoords;
+    const u = alpha * uv1.x + beta * uv2.x + gamma * uv3.x;
+    const v = alpha * uv1.y + beta * uv2.y + gamma * uv3.y;
+    return new THREE.Vector2(u, v);
+
+}
+
+function extrapolatePositionFromBarycentric(barycentricCoords, vertex1, vertex2, vertex3) {
+    const [alpha, beta, gamma] = barycentricCoords;
+    const x = alpha * vertex1.x + beta * vertex2.x + gamma * vertex3.x;
+    const y = alpha * vertex1.y + beta * vertex2.y + gamma * vertex3.y;
+    const z = alpha * vertex1.z + beta * vertex2.z + gamma * vertex3.z;
+    return new THREE.Vector3(x, y, z);
+}
+
+function computeWholeCutInsideFigure(currentCut, newVerticesAux,newVerticesEditionAux, filteredTriangs, filteredQuads, trianglesList, triangleListEditionFilteredUV, triangleListFiltered, clothEditionVertices, clothParticles, clothFaceVertexUvs)
+{
+    const cutStartPosition=currentCut.getCutStart();
+     const cutStarEmd=currentCut.getCutEnd();
+    const cutStartVectorEdition=currentCut.getCutStartVectorEdition();
+    const cutOppositeVectorEdition=currentCut.getCutEndVectorEdition();
+    const cutStartParticle=currentCut.getCutStartParticle();
+    const cutOppositeParticle=currentCut.getCutEndParticle();
+
+    //check everyFigure both in triangs and quads. I can do it in filtered one since this is the case 
+    // where not a single quad or triang is not added to the filtered version
+    // Doing it with raycaster doesn't makes anysense since the position could even be off camera
+    var figureIndexContained=-1;
+    for (let i=0;i<filteredTriangs.length;i++)
+    {
+      const triangleChecked =trianglesList[filteredTriangs[i][0]];
+      if (triangleChecked.containsPoint(new THREE.Vector3(cutStartPosition.x, newVerticesEditionAux[0].y, cutStartPosition.y)))
+      {
+        figureIndexContained=i;
+      }
+    }
+
+    if (figureIndexContained===-1) for (let i=0;i<filteredQuads.length;i++)
+    {
+      const quadChecked1 =trianglesList[filteredQuads[i][0]];
+      if (quadChecked1.containsPoint(new THREE.Vector3(cutStartPosition.x, newVerticesEditionAux[0].y, cutStartPosition.y)))
+      {
+        figureIndexContained=i;
+      }else
+      {
+        const quadChecked2 =trianglesList[filteredQuads[i][1]];
+        if (quadChecked2.containsPoint(new THREE.Vector3(cutStartPosition.x, newVerticesEditionAux[0].y, cutStartPosition.y)))
+        {
+          figureIndexContained=i;
+        }
+      }
+    }
+
+    //TODO TOMORROW: I should make sure than in quads being in the edge between triangs also count as being contained
+    //I will recode a version of the point inside for both quads and triangs. The quad one is going to call the triangle one adjusted for
+    //being inclusive and then check if it is in a border and removing accordingly. Another posible trick may be that if the extreme point is not 
+    // equal to the last intersection then it cannot be in a border
+
+
+}
+
+//TODO: Simplifying the parameter input of this function
+function computeFigureExtreme(startingSide, currentCut, intersectionsList, newVerticesAux,newVerticesEditionAux, filteredTriangs, trianglesList, triangleListEditionFilteredUV, triangleListFiltered, clothEditionVertices, clothParticles, clothFaceVertexUvs)
+{
+
+  console.log("length InteresectionsList",intersectionsList.length);
+  let cutStartPointIntersectionListCurrent;
+  let cutStartPointIntersectionListNext=null;
+  let cutStartPosition;
+  let cutStartVectorEdition;
+  let cutOppositeVectorEdition;
+  if (startingSide==="fromStart")
+  {
+    cutStartPointIntersectionListCurrent=intersectionsList[0];
+    if (intersectionsList.length>1)
+    {
+      cutStartPointIntersectionListNext=intersectionsList[1];
+    }
+    cutStartPosition=currentCut.getCutStart();
+    cutStartVectorEdition=currentCut.getCutStartVectorEdition();
+    cutOppositeVectorEdition=currentCut.getCutEndVectorEdition();
+    cutStartParticle=currentCut.getCutStartParticle();
+    cutOppositeParticle=currentCut.getCutEndParticle();
+  }
+  else if (startingSide==="fromEnd")
+  {
+    cutStartPointIntersectionListCurrent=intersectionsList[intersectionsList.length-1];
+    if (intersectionsList.length>1)
+    {
+      cutStartPointIntersectionListNext=intersectionsList[intersectionsList.length-2];
+    }
+      cutStartPosition=currentCut.getCutEnd();
+      cutStartVectorEdition=currentCut.getCutEndVectorEdition();
+      cutOppositeVectorEdition=currentCut.getCutStartVectorEdition();
+      cutStartParticle=currentCut.getCutEndParticle();
+      cutOppositeParticle=currentCut.getCutStartParticle();
+  }
+
+    console.log("cutStartPointIntersectionListCurrent",cutStartPointIntersectionListCurrent);
+        console.log("cutStartPointIntersectionListNext",cutStartPointIntersectionListNext);
+
+
+  let insideFigure=false;
+  let extremeBorderIndex;
+  let triangleBelongs;
+  if (intersectionsList.length>0)
+  {
+      for (let k=0;k<cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs;k++)
+        {
+          
+          //const cutStartPosition3D= new THREE.Vector3(cutStartPosition.x, newVerticesEditionAux[cutStartPointIntersectionListCurrent.indexVertex[0]].y,cutStartPosition.y)
+
+          for ( let l=0;l<cutStartPointIntersectionListCurrent.figure[k].length;l++)
+          {
+            
+            const myTriangle =trianglesList[cutStartPointIntersectionListCurrent.figure[k][l]];
+            const triangleToTest = new THREE.Triangle(clothEditionVertices[myTriangle.a], clothEditionVertices[myTriangle.b], clothEditionVertices[myTriangle.c]);
+
+            const barycentricCoords = barycentricCoordinates(cutStartPosition, clothEditionVertices[myTriangle.a], clothEditionVertices[myTriangle.b], clothEditionVertices[myTriangle.c]);
+          
+            //console.log("triangleToTest",triangleToTest);
+            //console.log("cutStartPosition3D",cutStartPosition3D);
+          
+
+            if (isPointInTriangle(barycentricCoords)) 
+              //TODO: remember that contains point can break in edge cases because of floating point precision
+            {
+              
+              insideFigure=true;
+              extremeBorderIndex=k;
+              triangleBelongs=l;
+            }
+          }
+        }  
+    
+
+  }
+
+    //inside figure works when inside a single triangle so later I need to check if it is a quad or triang
+  if (insideFigure)
+  {
+    //DONE: check what happens when the edge is near the border since I think that it will try to make a 
+    // bending spring in a place it should not be. That was fixed but there is something going on near the borders with a particle 
+    // suddenly floating stucked in a place. breaking point seems to be in the algorithm making the line or whatever is given to it after creating 
+    // the first cut 
+
+    //TODO tomorrow: case when bot points of the cut are inside of the quad
+    //the check will be done before entering the function of the extremes. In case it enters its a whole case similar to this one
+    //TODO tomorrow: recoding the point inside triangle function since it should not include the edges.
+
+    //TODO tomorrow: when the cut starts in a border
+    //TODO tomorrow: when the cut goes through a corner
+    //TODO tomorrow: when the cut goes thorugh a side between 2 figures
+    //TODO tomorrow: set weights to the vertex according to the area of the triangles it shares
+      
+  
+    const figureToCut=cutStartPointIntersectionListCurrent.figure[extremeBorderIndex];
+    const centralVertexPosition=cutStartPosition;
+
+    const intersectionEdge=cutStartPointIntersectionListCurrent.edgeIntersection;
+    const intersectionsWithEdge=cutStartPointIntersectionListCurrent.indexVertex;
+
+
+    let edgeOfIntersection1;
+    let newVertex1Edge1Index;
+    let newVertex2Edge1Index;
+
+    if (startingSide==="fromStart")
+    {
+      edgeOfIntersection1=intersectionEdge[0];
+      newVertex1Edge1Index=intersectionsWithEdge[1];
+      newVertex2Edge1Index=intersectionsWithEdge[0];
+    }else if (startingSide==="fromEnd")
+    {
+    if (intersectionEdge.length>1)
+    {
+      edgeOfIntersection1=intersectionEdge[1];
+      newVertex1Edge1Index=intersectionsWithEdge[0];
+      newVertex2Edge1Index=intersectionsWithEdge[1];
+    }else
+    {
+      edgeOfIntersection1=intersectionEdge[0];
+      newVertex1Edge1Index=intersectionsWithEdge[1];
+      newVertex2Edge1Index=intersectionsWithEdge[0];
+      }
+    }
+
+      if (cutStartPointIntersectionListCurrent.typeFigure[extremeBorderIndex]==="triang")
+    {
+      
+      const currentTriangNumber1=figureToCut[0];
+      const figureTriangNumber1=trianglesList[currentTriangNumber1];
+      const setTriangIndex=[figureTriangNumber1.a, figureTriangNumber1.b, figureTriangNumber1.c];
+
+      //get the central vertex in Edition for use in future calculations
+      newVerticesEditionAux.push(cutStartVectorEdition);  
+      const centralVertexIndex=newVerticesEditionAux.length-1;
+
+      //vertexParticle is going to be calculated later with more information. In this section I only will get the edition vertex
+      //the triangle should be in the correct order since the beggining since I just took the element from the array. I need to to a lot more for quads
+
+      //I need to find to sort the edges so that edgeOfIntersection is the first edge in the triangle
+
+      let loopVertex1=-1;
+      let loopVertex2=-1;
+      let loopvertex3=-1;
+      for (let vertInTriang1=0;vertInTriang1<3;vertInTriang1++)
+      {
+        for (let vertInTriang2=0;vertInTriang2<3;vertInTriang2++)
+        {
+          if (vertInTriang1!==vertInTriang2 )
+          {
+            if ((setTriangIndex[vertInTriang1]===edgeOfIntersection1[0])&&(setTriangIndex[vertInTriang2]===edgeOfIntersection1[1]))
+            {
+                loopVertex1=vertInTriang1;
+                loopVertex2=vertInTriang2;
+                loopvertex3=3-vertInTriang1-vertInTriang2; //since the sum of the 3 vertices is 0+1+2=3 I can get the remaining one with this formula 
+            }  
+
+          } 
+        }
+      }
+
+      let firstEdge=[setTriangIndex[loopVertex1],setTriangIndex[loopVertex2]];
+      let intersectingOppositeEdge=[setTriangIndex[loopVertex2],setTriangIndex[loopvertex3]];
+
+      //next step will be getting the UVs for the center Vertex and all the other ones
+
+      //TODO: make a test to see what happens when the the intersecting line is parallel to the oppositeEDGE. It should be working but I lack the tests
+
+      
+        //Its very important than proportion is used in the correct order for the calculations
+
+        //I think the next 50 lines can be replaced with simple barycentric coordinates calculation. 
+        // I will need to do it for both the position and the UVs but it should be way more simple and less error prone.
+        //I will need to make sure that the order of the vertices is correct though.
+
+      let UVtriangle1= structuredClone(clothFaceVertexUvs[currentTriangNumber1]);
+
+      let firstEdgeUV=[0,0];
+      computingEdgeUVtriangle (firstEdge, firstEdgeUV, trianglesList, currentTriangNumber1, UVtriangle1);
+
+      let intersectingOppositeEdgeUV=[0,0];
+      computingEdgeUVtriangle (intersectingOppositeEdge, intersectingOppositeEdgeUV,trianglesList, currentTriangNumber1, UVtriangle1);
+
+      let orderedTriangIndex=[firstEdge[0],firstEdge[1],intersectingOppositeEdge[1]];   //this is the order of the triangle vertices in the original triangle. It is important to keep it for future calculations
+      let triangleUV=[firstEdgeUV[0],firstEdgeUV[1],intersectingOppositeEdgeUV[1]];
+
+      let positionCutEdgeProportionFirstEdge=computeProportionEdge(newVerticesEditionAux[firstEdge[0]],newVerticesEditionAux[newVertex1Edge1Index], newVerticesEditionAux[firstEdge[1]]);
+      let xInter1UV = firstEdgeUV[0].x + positionCutEdgeProportionFirstEdge * (firstEdgeUV[1].x - firstEdgeUV[0].x);
+      let yInter1UV = firstEdgeUV[0].y + positionCutEdgeProportionFirstEdge * (firstEdgeUV[1].y - firstEdgeUV[0].y);
+
+
+     /*
+
+
+      //the position of the centerVertex in UV space la encuentro haciendo primero la continuacion de la recta para encontrar el punto de interseccion
+        //con el triangulo. Luego hallo la posicion en UV usando proporciones entre los 2 puntos de referencia usados. 
+        // Esto tambien podria usarse para obtener la ubicacion en el espacio 3D
+
+      let vertex1TriangSpace=newVerticesAux[firstEdge[0]];
+      let vertex2TriangSpace=newVerticesAux[firstEdge[1]];
+      let vertex3TriangSpace=newVerticesAux[intersectingOppositeEdge[1]];
+
+      orderedTriangIndex=[firstEdge[0],firstEdge[1],intersectingOppositeEdge[1]]; //this is the order of the triangle vertices in the original triangle. It is important to keep it for future calculations 
+
+
+      const vertex1OppositeEdition=newVerticesEditionAux[intersectingOppositeEdge[0]];
+      const vertex2OppositeEdition=newVerticesEditionAux[intersectingOppositeEdge[1]];
+
+      let centralVertexOppositeIntersectionValue=segmentProjectedIntersect(vertex1OppositeEdition.x, vertex1OppositeEdition.z, vertex2OppositeEdition.x, vertex2OppositeEdition.z, vertex1OppositeEdition.y, currentCut.getCutStart().x, currentCut.getCutStart().y, currentCut.getCutEnd().x, currentCut.getCutEnd().y);
+      
+      let positionCutEdgeProportionOppositeIntersectionEdge=computeProportionEdge(vertex1OppositeEdition, centralVertexOppositeIntersectionValue, vertex2OppositeEdition);
+
+      let positionCutEdgeProportionCentralToEdges=computeProportionEdge(newVerticesEditionAux[newVertex1Edge1Index],newVerticesEditionAux[centralVertexIndex], centralVertexOppositeIntersectionValue);
+
+      //next step is using the proportions to get the position of the coreesponding UV coordinate of the center opposite
+      let xInterAuxUV = intersectingOppositeEdgeUV[0].x + positionCutEdgeProportionOppositeIntersectionEdge * (intersectingOppositeEdgeUV[1].x - intersectingOppositeEdgeUV[0].x);
+      let yInterAuxUV = intersectingOppositeEdgeUV[0].y + positionCutEdgeProportionOppositeIntersectionEdge * (intersectingOppositeEdgeUV[1].y - intersectingOppositeEdgeUV[0].y);
+
+      //after that i should use both UV combined with the proportion to the center element to find its corresponding UV position
+      let xCentralUV = xInter1UV + positionCutEdgeProportionCentralToEdges * (xInterAuxUV - xInter1UV);
+      let yCentralUV   = yInter1UV + positionCutEdgeProportionCentralToEdges * (yInterAuxUV - yInter1UV);
+
+*/
+      let barycentricCoordsCentralVertex = barycentricCoordinates(centralVertexPosition, newVerticesEditionAux[orderedTriangIndex[0]], newVerticesEditionAux[orderedTriangIndex[1]], newVerticesEditionAux[orderedTriangIndex[2]]);
+      let extrapolatedUVCentralVertex = extrapolateUVFromBarycentric(barycentricCoordsCentralVertex, triangleUV[0], triangleUV[1], triangleUV[2]);
+      let xCentralUV = extrapolatedUVCentralVertex.x;
+      let yCentralUV = extrapolatedUVCentralVertex.y;
+
+      console.log("barycentricCoordsCentralVertex", barycentricCoordsCentralVertex);
+      console.log("centralVertexPosition",centralVertexPosition);
+      console.log("newVerticesEditionAux[orderedTriangIndex[0]]",newVerticesEditionAux[orderedTriangIndex[0]]);
+    
+/*
+      //I will use the proportion to get the initial position of the center vertex in the original coordinates
+      let xInterAuxPositional = vertex2TriangSpace.x + positionCutEdgeProportionOppositeIntersectionEdge * (vertex3TriangSpace.x - vertex2TriangSpace.x);
+      let yInterAuxPositional = vertex2TriangSpace.y + positionCutEdgeProportionOppositeIntersectionEdge * (vertex3TriangSpace.y - vertex2TriangSpace.y);
+      let zInterAuxPositional = vertex2TriangSpace.z + positionCutEdgeProportionOppositeIntersectionEdge * (vertex3TriangSpace.z - vertex2TriangSpace.z);
+
+      let xInter1Positional = newVerticesAux[newVertex1Edge1Index].x;
+      let yInter1Positional = newVerticesAux[newVertex1Edge1Index].y;
+      let zInter1Positional = newVerticesAux[newVertex1Edge1Index].z;
+
+
+
+      let xCentralPositional = xInter1Positional + positionCutEdgeProportionCentralToEdges * (xInterAuxPositional - xInter1Positional);
+      let yCentralPositional = yInter1Positional + positionCutEdgeProportionCentralToEdges * (yInterAuxPositional - yInter1Positional);
+      let zCentralPositional = zInter1Positional + positionCutEdgeProportionCentralToEdges * (zInterAuxPositional - zInter1Positional);
+*/
+      let extrapolatedCentralVertexClothPosition = extrapolatePositionFromBarycentric(barycentricCoordsCentralVertex, newVerticesAux[orderedTriangIndex[0]], newVerticesAux[orderedTriangIndex[1]], newVerticesAux[orderedTriangIndex[2]]);
+      let xCentralPositional = extrapolatedCentralVertexClothPosition.x;
+      let yCentralPositional = extrapolatedCentralVertexClothPosition.y;
+      let zCentralPositional = extrapolatedCentralVertexClothPosition.z;
+      
+      let triangleClone1= new THREE.Face3(centralVertexIndex, newVertex2Edge1Index, orderedTriangIndex[1]);
+      triangleListFiltered.push(triangleClone1);
+      
+      let UVoutput=structuredClone(UVtriangle1);
+      UVoutput[0].x=xCentralUV;
+      UVoutput[0].y=yCentralUV;
+      UVoutput[1].x=xInter1UV;
+      UVoutput[1].y=yInter1UV;
+      UVoutput[2]=firstEdgeUV[1];
+
+      triangleListEditionFilteredUV.push(UVoutput);
+      filteredTriangs.push([triangleListFiltered.length-1]);
+
+      let triangleClone2= new THREE.Face3(centralVertexIndex,  orderedTriangIndex[1], orderedTriangIndex[2]);
+      triangleListFiltered.push(triangleClone2);
+      
+      let UVoutput2=structuredClone(UVtriangle1);
+      UVoutput2[0].x=xCentralUV;
+      UVoutput2[0].y=yCentralUV;
+      UVoutput2[1]=firstEdgeUV[1];
+      UVoutput2[2]=intersectingOppositeEdgeUV[1];
+
+      triangleListEditionFilteredUV.push(UVoutput2);
+      filteredTriangs.push([triangleListFiltered.length-1]);
+
+      let triangleClone3= new THREE.Face3(centralVertexIndex,  orderedTriangIndex[2], orderedTriangIndex[0]);
+      triangleListFiltered.push(triangleClone3);
+      
+      let UVoutput3=structuredClone(UVtriangle1);
+      UVoutput3[0].x=xCentralUV;
+      UVoutput3[0].y=yCentralUV;
+      UVoutput3[1]=intersectingOppositeEdgeUV[1];
+      UVoutput3[2]=firstEdgeUV[0];
+
+      triangleListEditionFilteredUV.push(UVoutput3);
+      filteredTriangs.push([triangleListFiltered.length-1]);
+
+      let triangleClone4= new THREE.Face3(centralVertexIndex,  orderedTriangIndex[0], newVertex1Edge1Index);
+      triangleListFiltered.push(triangleClone4);
+      
+      let UVoutput4=structuredClone(UVtriangle1);
+      UVoutput4[0].x=xCentralUV;
+      UVoutput4[0].y=yCentralUV;
+      UVoutput4[1]=intersectingOppositeEdgeUV[1];
+      UVoutput4[2].x=xInter1UV;
+      UVoutput4[2].y=yInter1UV;
+
+      triangleListEditionFilteredUV.push(UVoutput4);
+      filteredTriangs.push([triangleListFiltered.length-1]);
+
+      let x = xCentralPositional;
+      let y = yCentralPositional;
+      let z = zCentralPositional;
+
+      cutStartParticle.overridePosition(new THREE.Vector3(x,y,z));
+      const p=cutStartParticle.pushToArray(clothParticles);
+      newVerticesAux.push(new THREE.Vector3(x,y,z)); 
+      const centralVertexParticle=clothParticles[centralVertexIndex];
+      
+
+      const distanceStructural=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[newVertex1Edge1Index]); //calculating one time is enough since both vertices are in same point
+      addConstraint(centralVertexParticle,clothParticles[newVertex1Edge1Index],distanceStructural, "structural");
+      addConstraint(centralVertexParticle,clothParticles[newVertex2Edge1Index],distanceStructural, "structural");
+
+    //TODO: make this also work when the cut ends exacly on the edge. IN THIS CASE THE BENDING SHOULD GO OVER DIRECTLY TO THE NEW VERTEX. I SHOULD ALSO CONSIDER THE CASE OF
+      //EDGES CONTAINED IN SAME FIGURE
+
+    //Make the constrains that goes over directly to intersectionsOrderedWithoutRepetition[1]
+      if ((cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)&&(intersectionsList.length>1)&&(cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)){ //this bending spring is added when the border cutted is not the edge of the whole cloth. There should always be another Edge after
+        const distanceBending=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[cutStartPointIntersectionListNext.indexVertex[0]]);
+        addConstraint(centralVertexParticle,clothParticles[cutStartPointIntersectionListNext.indexVertex[1]],distanceBending, "bending");
+        addConstraint(centralVertexParticle,clothParticles[cutStartPointIntersectionListNext.indexVertex[0]],distanceBending, "bending");
+      }else if ((cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)&&(intersectionsList.length===1)&&(cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)) //this bending spring is added when the border cutted is not the edge of the whole cloth but the cut ends in the edge. In this case there should not be another edge after but there should be one before since it is the end of the cut
+      {
+        //this is done both time since i need to equal springs since they should be on both sides of the cut
+         const distanceBending=newVerticesEditionAux[centralVertexIndex].distanceTo(cutOppositeVectorEdition);
+        addConstraint(centralVertexParticle,cutOppositeParticle,distanceBending, "bending");
+      }
+      // cuando la linea empieza en el triang final
+      //el iteraciones sin bordes simplemente debe hacer un simple checkeo para ver si el borde siguiente pertenece a mas de un triang o no
+
+
+
+      //constraints structural que salen de central. 
+        const distanceStructural1=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedTriangIndex[0]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedTriangIndex[0]],distanceStructural1, "structural"); //this shear is made as structural since it is between vertices that are in the same triangle. I should check if this is correct later
+
+        const distanceStructural2=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedTriangIndex[1]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedTriangIndex[1]],distanceStructural2, "structural");
+
+        const distanceStructural3=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedTriangIndex[2]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedTriangIndex[2]],distanceStructural3, "structural");
+
+
+    
+
+
+
+
+    }else if (cutStartPointIntersectionListCurrent.typeFigure[extremeBorderIndex]==="quad")
+    {
+      const currentTriangNumber1=figureToCut[0];
+      const currentTriangNumber2=figureToCut[1];
+
+      const CurrentTriangleIncludedNumber=figureToCut[triangleBelongs];
+
+      const figureTriangNumber1=trianglesList[currentTriangNumber1];
+      const figureTriangNumber2=trianglesList[currentTriangNumber2];
+      const figureTriangIncluded=trianglesList[CurrentTriangleIncludedNumber]
+
+      const setFirstTriang=new Set([figureTriangNumber1.a, figureTriangNumber1.b, figureTriangNumber1.c]);
+      const setSecondTriang=new Set([figureTriangNumber2.a, figureTriangNumber2.b, figureTriangNumber2.c]);
+
+      const setQuad=setFirstTriang.union(setSecondTriang).values();
+      
+      const vertexQuadIndex=[setQuad.next().value,setQuad.next().value,setQuad.next().value,setQuad.next().value];
+      
+    //Reasoning at the time: i should pay attention that this should be done both in edition and the cloth per se. The particle creation should be done by taking into account the particle
+      //get the central vertex in Edition for use in future calculations
+      //the particle is being created before since now I need to be able to make the conection in case the are too close between them
+      //the particle can be generated for the cloth at cut creation and then relocate it when I can know its position. 
+      // This way I can make unions already in the first step
+      newVerticesEditionAux.push(cutStartVectorEdition);  
+      const centralVertexIndex=newVerticesEditionAux.length-1;
+
+
+      //vertexParticle is going to be calculated later with more information. In this section I only will get the edition vertex
+
+
+      let loopVertex1=-1;
+      let loopVertex2=-1;
+      for (let vertInQuad1=0;vertInQuad1<4;vertInQuad1++)
+      {
+        for (let vertInQuad2=0;vertInQuad2<4;vertInQuad2++)
+        {
+          if (vertInQuad1!==vertInQuad2 )
+          {
+            if ((vertexQuadIndex[vertInQuad1]===edgeOfIntersection1[0])&&(vertexQuadIndex[vertInQuad2]===edgeOfIntersection1[1]))
+            {
+                loopVertex1=vertInQuad1;
+                loopVertex2=vertInQuad2; 
+            }  
+
+          } 
+        }
+      }
+
+      console.log("startLoopVertex1",  loopVertex1);
+      console.log("startLoopVertex2",  loopVertex2);
+
+      let auxIndex=vertexQuadIndex[0];
+      vertexQuadIndex[0]=vertexQuadIndex[loopVertex1];
+      vertexQuadIndex[loopVertex1]=auxIndex;
+
+      //since in first move I took the first element to other place I need to swap with the one that was originally there
+      if (loopVertex2===0)
+      {
+        auxIndex=vertexQuadIndex[1];
+        vertexQuadIndex[1]=vertexQuadIndex[loopVertex1];
+        vertexQuadIndex[loopVertex1]=auxIndex;
+      }
+        //this condition is to prevent reversing the swap if they were correct but reversed
+      else 
+      {
+        auxIndex=vertexQuadIndex[1];
+        vertexQuadIndex[1]=vertexQuadIndex[loopVertex2];
+        vertexQuadIndex[loopVertex2]=auxIndex;
+      }
+
+
+            
+      const orderedQuadIndex=vertexQuadIndex;
+
+      const symmetricDifference = (a, b) => new Set([...[...a].filter(x => !b.has(x)), ...[...b].filter(x => !a.has(x))]);
+      const differenceElements=symmetricDifference(setSecondTriang,setFirstTriang).values();
+      const diagonal1=differenceElements.next().value;
+      const diagonal2=differenceElements.next().value;
+
+      if (diagonal1===orderedQuadIndex[0])
+      {
+        if (diagonal2===orderedQuadIndex[3])
+        {
+          let aux=orderedQuadIndex[2];
+          orderedQuadIndex[2]=orderedQuadIndex[3];
+          orderedQuadIndex[3]=aux;
+
+        }
+      }else if (diagonal1===orderedQuadIndex[1])
+      {
+          if (diagonal2===orderedQuadIndex[2])
+        {
+          let aux=orderedQuadIndex[2];
+          orderedQuadIndex[2]=orderedQuadIndex[3];
+          orderedQuadIndex[3]=aux;
+
+        }
+        
+      } else if (diagonal2===orderedQuadIndex[0])
+      {
+        if (diagonal1===orderedQuadIndex[3])
+        {
+          let aux=orderedQuadIndex[2];
+          orderedQuadIndex[2]=orderedQuadIndex[3];
+          orderedQuadIndex[3]=aux;
+        }
+        
+      }else if (diagonal2===orderedQuadIndex[1])
+      {
+        if (diagonal1===orderedQuadIndex[2])
+        {
+          let aux=orderedQuadIndex[2];
+          orderedQuadIndex[2]=orderedQuadIndex[3];
+          orderedQuadIndex[3]=aux;
+        }
+        
+      }
+
+
+      let firstEdge=[orderedQuadIndex[0],orderedQuadIndex[1]];
+      let oppositeEdge=[orderedQuadIndex[2],orderedQuadIndex[3]];
+
+      //TODO: make a test to see what happens when the the intersecting line is parallel to the oppositeEDGE. It should be working but I lack the tests
+
+      
+        //Its very important than proportion is used in the correct order for the calculations
+
+
+
+      let UVtriangle1= structuredClone(clothFaceVertexUvs[currentTriangNumber1]);
+      let UVtriangle2= structuredClone(clothFaceVertexUvs[currentTriangNumber2]);
+
+      const triangleEditionIndex=trianglesList[CurrentTriangleIncludedNumber];
+      const triangleUV=clothFaceVertexUvs[CurrentTriangleIncludedNumber];
+
+      const barycentricCoordsCentralVertex=barycentricCoordinates(centralVertexPosition,newVerticesEditionAux[triangleEditionIndex.a],newVerticesEditionAux[triangleEditionIndex.b],newVerticesEditionAux[triangleEditionIndex.c])
+      const UVcoordsCenter=extrapolateUVFromBarycentric(barycentricCoordsCentralVertex, triangleUV[0], triangleUV[1], triangleUV[2]);
+      const xCentralUV=UVcoordsCenter.x;
+      const yCentralUV=UVcoordsCenter.y;
+
+      const clothCoordsCenter=extrapolatePositionFromBarycentric(barycentricCoordsCentralVertex, newVerticesAux[triangleEditionIndex.a], newVerticesAux[triangleEditionIndex.b], newVerticesAux[triangleEditionIndex.c]);
+      const xCentralPositional=clothCoordsCenter.x;
+      const yCentralPositional=clothCoordsCenter.y;
+      const zCentralPositional=clothCoordsCenter.z;
+
+
+      let firstEdgeUV=[0,0];
+      computingEdgeUVQuad (firstEdge, firstEdgeUV, trianglesList, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+
+      let oppositeEdgeUV=[0,0];
+      computingEdgeUVQuad (oppositeEdge, oppositeEdgeUV,trianglesList, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+
+      let positionCutEdgeProportionFirstEdge=computeProportionEdge(newVerticesEditionAux[firstEdge[0]],newVerticesEditionAux[newVertex1Edge1Index], newVerticesEditionAux[firstEdge[1]]);
+
+      let xInter1UV = firstEdgeUV[0].x + positionCutEdgeProportionFirstEdge * (firstEdgeUV[1].x - firstEdgeUV[0].x);
+      let yInter1UV = firstEdgeUV[0].y + positionCutEdgeProportionFirstEdge * (firstEdgeUV[1].y - firstEdgeUV[0].y);
+
+      /*
+
+      //the position of the centerVertex in UV space la encuentro haciendo primero la continuacion de la recta para encontrar el punto de interseccion
+        //con el cuadrilatero. Luego hallo la posicion en UV usando proporciones entre los 2 puntos de referencia usados. Esto tambien podria usarse en
+      //el espacio 3D donde antes lo necesitaba 
+
+      //I need to change the edge I use for calculations if the opposite is parallel to the first Edge
+
+      let vertex1Opposite=newVerticesEditionAux[oppositeEdge[0]];
+      let vertex2Opposite=newVerticesEditionAux[oppositeEdge[1]];
+      //first step should be finding the intrsection of the projection of the opposite edge with the line.
+      let lineOppositeIntersection=segmentProjectedIntersect(vertex1Opposite.x, vertex1Opposite.z, vertex2Opposite.x, vertex2Opposite.z, vertex1Opposite.y, currentCut.getCutStart().x, currentCut.getCutStart().y, currentCut.getCutEnd().x, currentCut.getCutEnd().y);
+      
+      let vertex1IntersectingLineOppositeEdition=vertex1Opposite;
+      let vertex2IntersectingLineOppositeEdition=vertex2Opposite;
+
+      let vertex1IntersectingLineOpposite=newVerticesAux[oppositeEdge[0]];
+      let vertex2IntersectingLineOpposite=newVerticesAux[oppositeEdge[1]];
+
+      let intersectionLinePosition=lineOppositeIntersection;
+      let intersectionOppositeEdge=oppositeEdge;
+      let intersetionLineOppositeUV=oppositeEdgeUV;
+      if (lineOppositeIntersection===false) //this means that the opposite edge is parallel so I should use another Edge. In that case i do some overwrites
+      {
+        vertex1IntersectingLineOppositeEdition=newVerticesEditionAux[firstEdge[1]];
+        vertex2IntersectingLineOppositeEdition=newVerticesEditionAux[oppositeEdge[0]];
+
+        vertex1IntersectingLineOpposite=newVerticesAux[firstEdge[1]];
+        vertex2IntersectingLineOpposite=newVerticesAux[oppositeEdge[0]];
+
+        let intersectionOppositeEdge=[vertex1IntersectingLineOppositeEdition, vertex2IntersectingLineOppositeEdition];
+        intersectionLinePosition=segmentProjectedIntersect(vertex1IntersectingLineOppositeEdition.x, vertex1IntersectingLineOppositeEdition.z, vertex2IntersectingLineOppositeEdition.x, vertex2IntersectingLineOppositeEdition.z, vertex1IntersectingLineOppositeEdition.y, currentCut.getCutStart().x, currentCut.getCutStart().y, currentCut.getCutEnd().x, currentCut.getCutEnd().y);
+      
+        computingEdgeUVQuad (intersectionOppositeEdge, intersetionLineOppositeUV,trianglesList, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+
+
+      }
+
+      let centralVertexOppositeValue = intersectionLinePosition[1];
+
+      let positionCutEdgeProportionOppositeIntersectionEdge=computeProportionEdge(vertex1IntersectingLineOppositeEdition, centralVertexOppositeValue, vertex2IntersectingLineOppositeEdition);
+
+      let positionCutEdgeProportionCentralToEdges=computeProportionEdge(newVerticesEditionAux[newVertex1Edge1Index],newVerticesEditionAux[centralVertexIndex], centralVertexOppositeValue);
+
+      //next step is using the proportions to get the position of the coreesponding UV coordinate of the center opposite
+      let xInterAuxUV = intersetionLineOppositeUV[0].x + positionCutEdgeProportionOppositeIntersectionEdge * (intersetionLineOppositeUV[1].x - intersetionLineOppositeUV[0].x);
+      let yInterAuxUV = intersetionLineOppositeUV[0].y + positionCutEdgeProportionOppositeIntersectionEdge * (intersetionLineOppositeUV[1].y - intersetionLineOppositeUV[0].y);
+
+      //after that i should use both UV combined with the proportion to the center element to find its corresponding UV position
+      let xCentralUV = xInter1UV + positionCutEdgeProportionCentralToEdges * (xInterAuxUV - xInter1UV);
+      let yCentralUV   = yInter1UV + positionCutEdgeProportionCentralToEdges * (yInterAuxUV - yInter1UV);
+
+      //I will use the proportion to get the initial position of the center vertex in the original coordinates
+      let xInterAuxPositional = vertex1IntersectingLineOpposite.x + positionCutEdgeProportionOppositeIntersectionEdge * (vertex2IntersectingLineOpposite.x - vertex1IntersectingLineOpposite.x);
+      let yInterAuxPositional = vertex1IntersectingLineOpposite.y + positionCutEdgeProportionOppositeIntersectionEdge * (vertex2IntersectingLineOpposite.y - vertex1IntersectingLineOpposite.y);
+      let zInterAuxPositional = vertex1IntersectingLineOpposite.z + positionCutEdgeProportionOppositeIntersectionEdge * (vertex2IntersectingLineOpposite.z - vertex1IntersectingLineOpposite.z);
+
+      let xInter1Positional = newVerticesAux[newVertex1Edge1Index].x;
+      let yInter1Positional = newVerticesAux[newVertex1Edge1Index].y;
+      let zInter1Positional = newVerticesAux[newVertex1Edge1Index].z;
+
+
+      let xCentralPositional = xInter1Positional + positionCutEdgeProportionCentralToEdges * (xInterAuxPositional - xInter1Positional);
+      let yCentralPositional = yInter1Positional + positionCutEdgeProportionCentralToEdges * (yInterAuxPositional - yInter1Positional);
+      let zCentralPositional = zInter1Positional + positionCutEdgeProportionCentralToEdges * (zInterAuxPositional - zInter1Positional);
+*/
+
+      //I will construct the triangles here
+      let triangleClone1= new THREE.Face3(centralVertexIndex, newVertex2Edge1Index, orderedQuadIndex[1]);
+      triangleListFiltered.push(triangleClone1);
+      
+      let UVoutput=structuredClone(UVtriangle1);
+      UVoutput[0].x=xCentralUV;
+      UVoutput[0].y=yCentralUV;
+      UVoutput[1].x=xInter1UV;
+      UVoutput[1].y=yInter1UV;
+      UVoutput[2]=firstEdgeUV[1];
+
+      triangleListEditionFilteredUV.push(UVoutput);
+      filteredTriangs.push([triangleListFiltered.length-1]);
+      
+
+      let triangleClone2= new THREE.Face3(centralVertexIndex, orderedQuadIndex[1], orderedQuadIndex[2]);
+      triangleListFiltered.push(triangleClone2);
+
+      let UVoutput2=structuredClone(UVtriangle1);
+      UVoutput2[0].x=xCentralUV;
+      UVoutput2[0].y=yCentralUV;
+      UVoutput2[1]=firstEdgeUV[1];
+      UVoutput2[2]=oppositeEdgeUV[0];
+
+
+      triangleListEditionFilteredUV.push(UVoutput2);
+
+      filteredTriangs.push([triangleListFiltered.length-1]);  
+
+      let triangleClone3= new THREE.Face3(centralVertexIndex, orderedQuadIndex[2], orderedQuadIndex[3]);
+      triangleListFiltered.push(triangleClone3);
+
+      let UVoutput3=structuredClone(UVtriangle1);
+      UVoutput3[0].x=xCentralUV;
+      UVoutput3[0].y=yCentralUV;
+      UVoutput3[1]=oppositeEdgeUV[0];
+      UVoutput3[2]=oppositeEdgeUV[1];
+
+
+      triangleListEditionFilteredUV.push(UVoutput3);
+
+      filteredTriangs.push([triangleListFiltered.length-1]);  
+
+      let triangleClone4= new THREE.Face3(centralVertexIndex, orderedQuadIndex[3], orderedQuadIndex[0]);
+      triangleListFiltered.push(triangleClone4);
+
+      let UVoutput4=structuredClone(UVtriangle1);
+      UVoutput4[0].x=xCentralUV;
+      UVoutput4[0].y=yCentralUV;
+      UVoutput4[1]=oppositeEdgeUV[1];
+      UVoutput4[2]=firstEdgeUV[0];
+
+
+      triangleListEditionFilteredUV.push(UVoutput4);
+
+      filteredTriangs.push([triangleListFiltered.length-1]);  
+
+      let triangleClone5= new THREE.Face3(centralVertexIndex, orderedQuadIndex[0], newVertex1Edge1Index);
+      triangleListFiltered.push(triangleClone5);
+
+      let UVoutput5=structuredClone(UVtriangle1);
+      UVoutput5[0].x=xCentralUV;
+      UVoutput5[0].y=yCentralUV;
+      UVoutput5[1]=firstEdgeUV[0];
+      UVoutput5[2].x=xInter1UV;
+      UVoutput5[2].y=yInter1UV;
+
+
+      triangleListEditionFilteredUV.push(UVoutput5);
+
+      filteredTriangs.push([triangleListFiltered.length-1]);  
+
+      
+      // cuando la linea empieza en el quad final
+      //el iteraciones sin bordes simplemente debe hacer un simple checkeo para ver si el borde siguiente pertenece a mas de un quad o no
+
+                    
+      let x = xCentralPositional;
+      let y = yCentralPositional;
+      let z = zCentralPositional;
+
+      cutStartParticle.overridePosition(new THREE.Vector3(x,y,z));
+      const p=cutStartParticle.pushToArray(clothParticles);
+      newVerticesAux.push(new THREE.Vector3(x,y,z)); 
+      const centralVertexParticle=clothParticles[centralVertexIndex];
+      
+      const distanceStructural=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[newVertex1Edge1Index]); //calculating one time is enough since both vertices are in same point
+      addConstraint(centralVertexParticle,clothParticles[newVertex1Edge1Index],distanceStructural, "structural");
+      addConstraint(centralVertexParticle,clothParticles[newVertex2Edge1Index],distanceStructural, "structural");
+
+      //TODO: make this also work when the cut ends exacly on the edge. IN THIS CASE THE BENDING SHOULD GO OVER DIRECTLY TO THE NEW VERTEX. I SHOULD ALSO CONSIDER THE CASE OF
+      //EDGES CONTAINED IN SAME FIGURE
+
+      //Make the constrains that goes over directly to intersectionsOrderedWithoutRepetition[1]
+      if ((cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)&&(intersectionsList.length>1)&&(cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)){ //this bending spring is added when the border cutted is not the edge of the whole cloth. There should always be another Edge after
+        const distanceBending=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[cutStartPointIntersectionListNext.indexVertex[0]]);
+        addConstraint(centralVertexParticle,clothParticles[cutStartPointIntersectionListNext.indexVertex[1]],distanceBending, "bending");
+        addConstraint(centralVertexParticle,clothParticles[cutStartPointIntersectionListNext.indexVertex[0]],distanceBending, "bending");
+      }else if ((cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)&&(intersectionsList.length===1)&&(cutStartPointIntersectionListCurrent.amountOfQuadsOrTriangs===2)) //this bending spring is added when the border cutted is not the edge of the whole cloth but the cut ends in the edge. In this case there should not be another edge after but there should be one before since it is the end of the cut
+      {
+        //this is done both time since i need to equal springs since they should be on both sides of the cut
+         const distanceBending=newVerticesEditionAux[centralVertexIndex].distanceTo(cutOppositeVectorEdition);
+        addConstraint(centralVertexParticle,cutOppositeParticle,distanceBending, "bending");
+      }
+
+
+        //constraints Shear que salen de central. 
+        const distanceShear1=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedQuadIndex[0]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedQuadIndex[0]],distanceShear1, "structural"); //this shear is made as structural since it is between vertices that are in the same triangle. I should check if this is correct later
+
+        const distanceShear2=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedQuadIndex[1]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedQuadIndex[1]],distanceShear2, "structural");
+
+        const distanceShear3=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedQuadIndex[2]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedQuadIndex[2]],distanceShear3, "structural");
+
+        const distanceShear4=newVerticesEditionAux[centralVertexIndex].distanceTo(newVerticesEditionAux[orderedQuadIndex[3]]); //calculating one time is enough since both vertices are in same point
+        addConstraint(centralVertexParticle,clothParticles[orderedQuadIndex[3]],distanceShear4, "structural");
+
+    }
+
+  }
+      
+}
+  
   
   function cutCloth(){
 
@@ -433,8 +1331,41 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
       }
       console.log("ListOfIntersectionUnsorted",listOfIntersection);
 
-      listOfIntersection.sort(compareIntersection);
+      listOfIntersection.sort(compareIntersection); 
 
+      let currentFigure=listOfIntersection[0][4];
+      let mode="check";
+      for (let j=1;j<listOfIntersection.length-1;j=j+1)
+      {
+        if (mode==="check")
+        {
+            if (listOfIntersection[j][4]===currentFigure)
+            {
+              mode="set";
+
+            }else if (listOfIntersection[j+1][4]===currentFigure)
+            {
+              const aux=listOfIntersection[j];
+              listOfIntersection[j]=listOfIntersection[j+1];  
+              listOfIntersection[j+1]=aux;
+              mode="set";
+              console.log("SWAP HAPPENED");
+            }else
+            {
+              //this means that the line does belong to a quad in a extreme of the line since every other one shares quad with the next one
+              mode="check";
+              currentFigure=listOfIntersection[j][4];
+              console.log("THERE WAS AN EXTRME");
+            }
+        }else if (mode==="set") 
+        {
+           mode="check";
+           currentFigure=listOfIntersection[j][4];
+        }
+
+      } 
+
+      
       console.log("listOfIntersection Sorted",structuredClone(listOfIntersection));
 
       //remove repetition. this is done so that each specific point indicates which quads it belongs to without repetition
@@ -452,8 +1383,10 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
 
 
-      let iterationsWihoutBorder=0;
+      let iterationsSinceLimitStart=0;
       let intersectionsOrderedWithoutRepetition=[]
+
+      console.log("listOfIntersection HELLO", listOfIntersection);
       for (let j=0;j<listOfIntersection.length;j=j+1)
       {
 
@@ -463,39 +1396,17 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
       // TODO: IMPLEMENT THE LIMIT OF THE CUT
       //TODO: IMPLEMENT THE CORNER CUT
 
-
         
 
-        //TODO: remove the swap below since it is probably unneeded
-        //I will do a little trick of checking the future edges that are not at the the end and see if a border is going to happen. In case it happens I will do a little clean swap in the array before reaching there
-          if (((j<listOfIntersection.length-2)&&(j>0)&&(iterationsWihoutBorder>0)&&(!((listOfIntersection[j][2][0]===listOfIntersection[j+1][2][1])&&(listOfIntersection[j][2][1]===listOfIntersection[j+1][2][0])))))
-          {
-            //iterations wihout border should not be 0 to prevent to get here in the second edge that forms the cut
 
-
-            //this is an effective way to reorder the list in case that somehow the floating point calculation decide that the 2 edges of a cut are not in the correct order
-
-            //if the figure in the intersection is different to the next edge but is equal to the other swap. Otherwise error
-            if (listOfIntersection[j-1][4]!==listOfIntersection[j][4]){
-              if ((listOfIntersection[j-1][4]===listOfIntersection[j+1][4])&&(listOfIntersection[j][4]===listOfIntersection[j+2][4]))
-              {
-                var aux=listOfIntersection[j];
-                listOfIntersection[j]=listOfIntersection[j+1];
-                listOfIntersection[j+1]=aux;
-                console.log("swap happened");
-              }else{
-                console.log("error in the swap")
-              }
-            }
-
-          }
 
              //first add the intersection vertexes. With that obtained triangles can be created. They are on the same position for the other side of the cut
              //Flip this edge in case it shares quad with the next one meaning that orientation would be flipped
             //this is made to consider the case of an edge that is part of a single quad.
           var edgeOfIntersection1;
 
-          if ((j<listOfIntersection.length-1)&&(listOfIntersection[j][4]===listOfIntersection[j+1][4])) //this swap would be made to make sure both particles are in correct side of cut
+          if ((j<listOfIntersection.length-1)&&(listOfIntersection[j][4]===listOfIntersection[j+1][4])) 
+            //this swap would be made to make sure both particles are in correct side of cut. it happens if both this segemnt and the nextt are in the same figure
           {
             edgeOfIntersection1=[listOfIntersection[j][2][1],listOfIntersection[j][2][0]];
           }else
@@ -503,13 +1414,14 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
             edgeOfIntersection1=[listOfIntersection[j][2][0],listOfIntersection[j][2][1]];
           }
 
-          //TODO: Make mass of particles proportional to adjacent triangles
+          //TODO next: Make mass of particles proportional to adjacent triangles
 
           //get proportion cut happens in edge
           const verticesEdition=clothObjectEditionArray[i].cloth.clothGeometry.vertices;
           let positionCutEdgeProportionEdge1;
 
                 if ((verticesEdition[edgeOfIntersection1[0]]).x!==(verticesEdition[edgeOfIntersection1[1]]).x)
+                  //this check is to prevent division by zero
                 {
                   positionCutEdgeProportionEdge1=(Math.abs((verticesEdition[edgeOfIntersection1[0]]).x-listOfIntersection[j][1].x))/(Math.abs((verticesEdition[edgeOfIntersection1[0]]).x-(verticesEdition[edgeOfIntersection1[1]]).x));
                 }else
@@ -569,7 +1481,7 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
                           
 
 
-
+            //TODO: I think this would not work with cuts that are not straight. the caluclation asumes colinterality between the 3 particles.
               if (bendSpringsTested!==false){
                 const distanceDifferenceBendingStructural=bendSpringsTested.distance-particlesEdge[1-l].structuralConstraints[k].distance-particlesEdge[1-l].returnConstraint(particlesEdge[l], "structural").distance
                 if (distanceDifferenceBendingStructural<0.001) //this is to check for colinearity with a margin for floating point errors
@@ -615,7 +1527,12 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
           for (var k=0;k<2;k++)
           {
             const distanceStructural=newVerticesEdition[edgeOfIntersection1[k]].distanceTo(newVerticesEdition[newVertices.length-1-k]);
+            if (distanceStructural===0)
+            {
+              console.log("error distance structural is 0, hello1");
+            }
             addConstraint(clothObjectArray[i].cloth.particles[newVertices.length-1-k], particlesEdge[k], distanceStructural, "structural");
+
 
             
           }
@@ -634,11 +1551,17 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
       
 
           
-          if (iterationsWihoutBorder>0){ //its restarted at 1 when a border has a single element meaning its a border. 
+          if (iterationsSinceLimitStart>0){ //its restarted at 1 when a border has a single element meaning its a border. 
             const distanceStructural=newVerticesEdition[newVertices.length-2].distanceTo(newVerticesEdition[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-1].indexVertex[0]]); //calculating one time is enough since both vertices are in same point
+            if (distanceStructural===0)
+            {
+              console.log("error distance structural is 0, hello2");
+              //"TODO: tomorrow fixing the error that happens for connecting 2 adjacent lines that should be connected"
+            }
+            
             addConstraint(clothObjectArray[i].cloth.particles[newVertices.length-2],clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-1].indexVertex[0]],distanceStructural, "structural");
             addConstraint(clothObjectArray[i].cloth.particles[newVertices.length-1],clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-1].indexVertex[1]],distanceStructural, "structural");
-            if (iterationsWihoutBorder>1){ 
+            if (iterationsSinceLimitStart>1){ 
               const distanceBending=newVerticesEdition[newVertices.length-2].distanceTo(newVerticesEdition[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-2].indexVertex[0]]);
               addConstraint(clothObjectArray[i].cloth.particles[newVertices.length-2],clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-2].indexVertex[0]],distanceBending, "bending");
               addConstraint(clothObjectArray[i].cloth.particles[newVertices.length-1],clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[intersectionsOrderedWithoutRepetition.length-2].indexVertex[1]],distanceBending, "bending");
@@ -662,11 +1585,12 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
 
 
-        //comparing intersection line should be enough since they are consecutive cuts and this works unless they cut the same line 2 times consecutevly. And i plan to separate the line in those cases
-        //Remember that doing the identification with points may not work where there is rounding errors. For this same reason there is probably a little of wobbling in the cuts but it does not matter
+        //comparing intersection line to see if the same line is reversed consecutively meaning that it is a border between 2 quads. In that case I will add the 2 intersections
+        //  together in the same element to make it easier to handle the cut later since they are basically the same intersection but with different orientation. 
+        // This is made to consider the case of an edge that is part of 2 adjacent quads. It checks vertex per se and not coordinate to prevent problems with the fact that 2 points in the border
+        //share same coordinate but are different vertex.
         if ((j<listOfIntersection.length-1)&&(listOfIntersection[j][2][0]===listOfIntersection[j+1][2][1])&&(listOfIntersection[j][2][1]===listOfIntersection[j+1][2][0]))
         {
-
 
           var pushedElement = {
             'proportionCuttingLine': listOfIntersection[j][0],
@@ -681,24 +1605,8 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
           j=j+1;
           
-       iterationsWihoutBorder=iterationsWihoutBorder+1;
+       iterationsSinceLimitStart=iterationsSinceLimitStart+1;
           
-          
-          //outside border
-
-          /*
-          let pushedElement=[listOfIntersection[j][0]];
-          pushedElement.push(listOfIntersection[j][1]);
-          pushedElement.push(2);
-          pushedElement.push(listOfIntersection[j][2]);
-          pushedElement.push(listOfIntersection[j][3]);
-          pushedElement.push(listOfIntersection[j][4]);
-          pushedElement.push(listOfIntersection[j+1][2]);
-          pushedElement.push(listOfIntersection[j+1][3]);
-          pushedElement.push(listOfIntersection[j+1][4]);
-          intersectionsOrderedWithoutRepetition.push(pushedElement);
-          j=j+1
-          */
         }else
         {
 
@@ -714,18 +1622,17 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
           }
           intersectionsOrderedWithoutRepetition.push(pushedElement);
 
-
-          if (iterationsWihoutBorder===0){
-            iterationsWihoutBorder=1;
+          //this works since it adds if it the next element is the second part of a quad since it will the one using this interationsSinceLimitStart information
+          
+          if ((j<listOfIntersection.length-1)&&(listOfIntersection[j][3]===listOfIntersection[j+1][3])&&(listOfIntersection[j][4]===listOfIntersection[j+1][4]))
+          {
+            iterationsSinceLimitStart=iterationsSinceLimitStart+1;
           }else
           {
-            iterationsWihoutBorder=0;
-          }
-          console.log("1 time")
-         
-
-          
+            iterationsSinceLimitStart=0;
+          }    
         }
+        //console.log("j=", j, "  iterationsSinceLimitStart=", iterationsSinceLimitStart);
 
       } 
 
@@ -739,24 +1646,20 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
 
     console.log("intersectionsOrderedWithoutRepetition",intersectionsOrderedWithoutRepetition);
-    
+    console.log("clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[0].indexVertex[0]]",clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[0].indexVertex[0]]);
+    console.log("clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[0].indexVertex[1]]",clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[0].indexVertex[1]]);
+ 
+  
+    console.log("cloth.vertices",newVerticesEdition);
+    console.log("cloth.particles",clothObjectArray[i].cloth.particles);
+    console.log("particle added",particleAdded);
+
     currentCut.setListOfIntersectionSorted(intersectionsOrderedWithoutRepetition);
     console.log("cutListClothArray",cutListClothArray[i]);
 
-     function computeProportionEdge(vertex1, vertex2, vertex3)
-                      {
-                          if ((vertex1).x!==(vertex3).x)
-                          {
-                            return (Math.abs((vertex1).x-vertex2.x))/(Math.abs((vertex1).x-(vertex3).x));
-                          }else
-                          {
-                            return (Math.abs((vertex1).z-vertex2.z))/(Math.abs((vertex1).z-(vertex3).z));     
-                          }
-                      }
 
-          //TODO: ADD CASE WHERE THE 2 VERTEX EXTREME INSIDE SAME QUAD NOT CUTTING ANY EDGE
 
-          //TODO: THERE SHOULD BE A COMPLETELY APART CASE WHERE THAT STARTING POINT IS IN AN EDGE
+    
 
          //first find the index of the element in the border that does not belong to the quad of the next edge meaning 
          // that is should be the first one with the extreme of the cutting line
@@ -770,235 +1673,25 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
          
 
+         //TODO: consider the case where the cut stars in 2 adjacent quads having a single intersection point. the bending spring should be there
+//TODO: ADD CASE WHERE THE 2 VERTEX EXTREME INSIDE SAME QUAD NOT CUTTING ANY EDGE
+        //TODO:Tomorrow. Casos en que termina en un borde limite y ademas casoS en que sale de una esquina (ESQUINA A ESQUINA. ESQUINA A LADO. ESQUINA A CENTRO). Y casos en que coincide con el lado
+        //segment intersect is made in such a way that if the line is exactly on a corner it will consider it as intersecting with both lines. If is is at the end of the line it is also counted. So if the last registered point is in the limit i should not add another 
+        // I should make some tests to see if this is working correctly and if not I should add some tolerance to the calculations. This is important because it can cause some problems with the UVs and the constraints if the line is exactly on the edge.
+        //TODO: Tomorrow add the different spring mass depending area of triangles it belongs.
+        //TODO: tomorrow fix phisics model
+        //TODO: tomorrow add undo functionality
+        //TODO: Tomorrow add the union Clocth functionality to be able to merge the cutted cloth with other cloth. This should be done by checking the vertices that are in the same position and then merging them. I should also check the constraints that are connected to those vertices and merge them as well. 
+        //TODO: TOMORROW: ADD PIECES TO THE CURRENT CLOTH FUNCTIONALITY
+        
 
-         let insideQuad=false;
-         let extremeBorderIndex;
-         if (intersectionsOrderedWithoutRepetition.length>0)
-         {
-            for (let k=0;k<intersectionsOrderedWithoutRepetition[0].amountOfQuadsOrTriangs;k++)
-              {
-                
-                const cutStartPosition=currentCut.getCutStart();
-                const cutStartPosition3D= new THREE.Vector3(cutStartPosition.x, newVerticesEdition[intersectionsOrderedWithoutRepetition[0].indexVertex[0]].y,cutStartPosition.y)
+ 
+    computeFigureExtreme("fromStart", currentCut,intersectionsOrderedWithoutRepetition, newVertices, newVerticesEdition, filteredTriangs,unfilteredTriangles, filteredTrianglesEditionUVS, filteredTriangles,clothObjectEditionArray[i].cloth.clothGeometry.vertices,clothObjectArray[i].cloth.particles, clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0]);
 
-                for ( let l=0;l<intersectionsOrderedWithoutRepetition[0].figure[k].length;l++)
-                {
-                  
-                  const myTriangle =unfilteredTriangles[intersectionsOrderedWithoutRepetition[0].figure[k][l]];
-                  const triangleToTest = new THREE.Triangle(clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.a], clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.b], clothObjectEditionArray[i].cloth.clothGeometry.vertices[myTriangle.c]);
+    computeFigureExtreme("fromEnd", currentCut,intersectionsOrderedWithoutRepetition, newVertices, newVerticesEdition, filteredTriangs,unfilteredTriangles, filteredTrianglesEditionUVS, filteredTriangles,clothObjectEditionArray[i].cloth.clothGeometry.vertices,clothObjectArray[i].cloth.particles, clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0]);
 
-                  
-                
-                  //console.log("triangleToTest",triangleToTest);
-                  //console.log("cutStartPosition3D",cutStartPosition3D);
-                 
-
-                  if (triangleToTest.containsPoint(cutStartPosition3D)) //TODO: remember that contains point can break in edge cases because of floating point precision
-                  {
-                    
-                    insideQuad=true;
-                    extremeBorderIndex=k;
-                  }
-                }
-              }  
-          
-
-         }
-
-
-         //actually inside quad works when inside a single triangle so later I need to check if it is a quad
-        if (insideQuad)
-        {
-             
-         
-          const figureToCut=intersectionsOrderedWithoutRepetition[0].figure[extremeBorderIndex];
-          const centralVertexPosition=currentCut.getCutStart();
-
-           const intersectionEdge=intersectionsOrderedWithoutRepetition[0].edgeIntersection;
-          const intersectionsWithEdge=intersectionsOrderedWithoutRepetition[0].indexVertex;
-
-
-          
-          if (intersectionsOrderedWithoutRepetition[0].typeFigure[extremeBorderIndex]==="quad")
-          {
-              const currentTriangNumber1=figureToCut[0];
-              const currentTriangNumber2=figureToCut[1];
-    
-              const edgeOfIntersection1=intersectionEdge[0];
-
-              const newVertex1Edge1Index=intersectionsWithEdge[1];
-              const newVertex2Edge1Index=intersectionsWithEdge[0];
-
-              const figureTriangNumber1=unfilteredTriangles[currentTriangNumber1];
-              const figureTriangNumber2=unfilteredTriangles[currentTriangNumber2];
-
-              const setFirstTriang=new Set([figureTriangNumber1.a, figureTriangNumber1.b, figureTriangNumber1.c]);
-              const setSecondTriang=new Set([figureTriangNumber2.a, figureTriangNumber2.b, figureTriangNumber2.c]);
-
-              const setQuad=setFirstTriang.union(setSecondTriang).values();
-
-              console.log("setFirstTriang",setFirstTriang);
-              console.log("setSecondTriang",setSecondTriang);
-              console.log("setQuad",setQuad);
-             
-              const vertexQuadIndex=[setQuad.next().value,setQuad.next().value,setQuad.next().value,setQuad.next().value];
-              const vertexQuad=[newVertices[vertexQuadIndex[0]],newVertices[vertexQuadIndex[1]],newVertices[vertexQuadIndex[2]],newVertices[vertexQuadIndex[3]]];
-              
-     
-
-              //TODO:making the proportion work to get the particle position of the new Vertex. A trick do so is just placing it somewhere inside the quad and letting the 
-            //springs to self correct. I know since all quads are convex that the average of the position of all vertexes should be inside
-
-            //I know since all quads are convex that the average of the position of all vertexes should be inside. The exact correct position will be reached during simulation
+      console.log("intersectionsOrderedWithoutRepetition HELLO", intersectionsOrderedWithoutRepetition);
            
-
-
-            let x = (vertexQuad[0].x + vertexQuad[1].x + vertexQuad[2].x + vertexQuad[3].x)/4;
-            let y = (vertexQuad[0].y + vertexQuad[1].y + vertexQuad[2].y + vertexQuad[3].y)/4;
-            let z = (vertexQuad[0].z + vertexQuad[1].z + vertexQuad[2].z + vertexQuad[3].z)/4;
-
-
-            newVertices.push(new THREE.Vector3(x,y,z));     
-            newVerticesEdition.push(new THREE.Vector3(centralVertexPosition.x, newVerticesEdition[intersectionsOrderedWithoutRepetition[0].indexVertex[0]].y,centralVertexPosition.y)); 
-            const p=new Particle(x, y, z,MASS,false).pushToArray(clothObjectArray[i].cloth.particles);
-
-            const centralVertexIndex=newVertices.length-1;
-            const centralVertexParticle=clothObjectArray[i].cloth.particles[centralVertexIndex];
-
-
-            console.log("centralVertexParticle",centralVertexParticle);
-            console.log("p",p[centralVertexIndex]===centralVertexParticle);
-
-            //with the particles alreaady located I should place the constrains that go with it
-
-
-            
-
-              let startLoopVertex=-1;
-              for (let vertInQuad=0;vertInQuad<4;vertInQuad++)
-              {
-
-                if (((vertexQuadIndex[vertInQuad]===edgeOfIntersection1[0])&&(vertexQuadIndex[(vertInQuad+1)%4]===edgeOfIntersection1[1]))||((vertexQuadIndex[vertInQuad]===edgeOfIntersection1[1])&&(vertexQuadIndex[(vertInQuad+1)%4]===edgeOfIntersection1[0])))
-                  {
-                    startLoopVertex=vertInQuad;
-                  }  
-              }
-
-              
-
-              const orderedQuadIndex=[vertexQuadIndex[startLoopVertex],vertexQuadIndex[(startLoopVertex+1)%4],vertexQuadIndex[(startLoopVertex+2)%4],vertexQuadIndex[(startLoopVertex+3)%4]];
-              
-              const symmetricDifference = (a, b) => new Set([...[...a].filter(x => !b.has(x)), ...[...b].filter(x => !a.has(x))]);
-              const differenceElements=symmetricDifference(setSecondTriang,setFirstTriang).values();
-              const diagonal1=differenceElements.next().value;
-              const diagonal2=differenceElements.next().value;
-
-              if (diagonal1===orderedQuadIndex[0])
-              {
-                if (diagonal2===orderedQuadIndex[3])
-                {
-                  let aux=orderedQuadIndex[2];
-                  orderedQuadIndex[2]=orderedQuadIndex[3];
-                  orderedQuadIndex[3]=aux;
-
-                }
-              }else if (diagonal1===orderedQuadIndex[1])
-              {
-                 if (diagonal2===orderedQuadIndex[2])
-                {
-                  let aux=orderedQuadIndex[2];
-                  orderedQuadIndex[2]=orderedQuadIndex[3];
-                  orderedQuadIndex[3]=aux;
-
-                }
-                
-              } else if (diagonal2===orderedQuadIndex[0])
-              {
-                if (diagonal1===orderedQuadIndex[3])
-                {
-                  let aux=orderedQuadIndex[2];
-                  orderedQuadIndex[2]=orderedQuadIndex[3];
-                  orderedQuadIndex[3]=aux;
-                }
-                
-              }else if (diagonal2===orderedQuadIndex[1])
-              {
-                if (diagonal1===orderedQuadIndex[2])
-                {
-                  let aux=orderedQuadIndex[2];
-                  orderedQuadIndex[2]=orderedQuadIndex[3];
-                  orderedQuadIndex[3]=aux;
-                }
-                
-              }
-
-
-              console.log("orderedQuadIndex",orderedQuadIndex); 
-
-
-              let triangleClone1= new THREE.Face3(centralVertexIndex, newVertex1Edge1Index, orderedQuadIndex[1]);
-
-              filteredTriangles.push(triangleClone1);
-              filteredTriangs.push([filteredTriangles.length-1]);  
-
-              let triangleClone2= new THREE.Face3(centralVertexIndex, orderedQuadIndex[1], orderedQuadIndex[2]);
-
-              filteredTriangles.push(triangleClone2);
-              filteredTriangs.push([filteredTriangles.length-1]);  
-
-              let triangleClone3= new THREE.Face3(centralVertexIndex, orderedQuadIndex[2], orderedQuadIndex[3]);
-
-              filteredTriangles.push(triangleClone3);
-              filteredTriangs.push([filteredTriangles.length-1]);  
-
-              let triangleClone4= new THREE.Face3(centralVertexIndex, orderedQuadIndex[3], orderedQuadIndex[0]);
-
-              filteredTriangles.push(triangleClone4);
-              filteredTriangs.push([filteredTriangles.length-1]);  
-
-              let triangleClone5= new THREE.Face3(centralVertexIndex, orderedQuadIndex[0], newVertex2Edge1Index);
-
-              filteredTriangles.push(triangleClone5);
-              filteredTriangs.push([filteredTriangles.length-1]);  
-
-              //TODO mañana: agregar los nuevos constraints estructurales corespondientes a los nuevos triangulos que deba añadir. Recordar tambien los de shearing. 
-              // falta ocuparse de UV para todos
-              //I need to find the 2 vertexes of edges of intersection inside the quad and then followup the loop from there
-
-
-
-            //TODO:  Verificar que constraints que estan abajo estan bien hechos 
-            // cuando la linea empieza en el quad final
-            //el iteraciones sin bordes simplemente debe hacer un simple checkeo para ver si el borde siguiente pertenece a mas de un quad o no
-
-            console.log("intersectionsOrderedWithoutRepetition.length",intersectionsOrderedWithoutRepetition.length);
-            
-            const distanceStructural=newVerticesEdition[centralVertexIndex].distanceTo(newVerticesEdition[newVertex1Edge1Index]); //calculating one time is enough since both vertices are in same point
-            addConstraint(centralVertexParticle,clothObjectArray[i].cloth.particles[newVertex1Edge1Index],distanceStructural, "structural");
-            addConstraint(centralVertexParticle,clothObjectArray[i].cloth.particles[newVertex2Edge1Index],distanceStructural, "structural");
-
-            //TODO: make this also work when the cut ends quick. IN THIS CASE THE BENDING SHOULD GO OVER DIRECTLY TO THE NEW VERTEX. I SHOULD ALSO CONSIDER THE CASE OF
-            //EDGES CONTAINED IN SAME FIGURE
-
-            //Make the constrains that goes over directly to intersectionsOrderedWithoutRepetition[1]
-            if ((intersectionsOrderedWithoutRepetition[0].amountOfQuadsOrTriangs===2)&&(intersectionsOrderedWithoutRepetition.length>1)){ //this bending spring is added when the border cutted is not the edge of the whole cloth. There should always be another Edge after
-              const distanceBending=newVerticesEdition[centralVertexIndex].distanceTo(newVerticesEdition[intersectionsOrderedWithoutRepetition[1].indexVertex[0]]);
-              addConstraint(centralVertexParticle,clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[1].indexVertex[1]],distanceBending, "bending");
-              addConstraint(centralVertexParticle,clothObjectArray[i].cloth.particles[intersectionsOrderedWithoutRepetition[1].indexVertex[0]],distanceBending, "bending");
-            }
-
-          
-
-
-
-          }
-
-
-
-
-
-        }
-
       for (let j=1;j<intersectionsOrderedWithoutRepetition.length;j=j+1)
       {
 /*
@@ -1042,7 +1735,7 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
               
 
 
-     
+        //this check to find 2 consecutive intersection that are part of the same figure also works to not include the case when the is not an entire figure
         for (let k=0;k<intersectionsOrderedWithoutRepetition[j-1].amountOfQuadsOrTriangs;k=k+1) //this 2 fors are made to check the 2 interesection that belong to the quad/triang
         {
 
@@ -1109,35 +1802,16 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
                     const thirdVertex=secondEdge[1];
 
 
-                     function computingEdgeUV (edge, edgeUV, triangles,triangNumber1,UVtriangles1){
-
-                        for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
-                        {
-                          if (edge[iteratorEdge]===triangles[triangNumber1].a)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[0];
-                          }else
-                          if (edge[iteratorEdge]===triangles[triangNumber1].b)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[1];
-                          }
-                          else
-                          if (edge[iteratorEdge]===triangles[triangNumber1].c)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[2];
-                          }
-                        }
-
-                      }
+                    
 
                       let UVtriangle1= structuredClone(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][currentTriangNumber1]);
 
 
                     let firstEdgeUV=[0,0];
-                    computingEdgeUV (firstEdge, firstEdgeUV, unfilteredTriangles, currentTriangNumber1, UVtriangle1);
+                    computingEdgeUVTriang (firstEdge, firstEdgeUV, unfilteredTriangles, currentTriangNumber1, UVtriangle1);
 
                     let secondEdgeUV=[0,0];
-                    computingEdgeUV (secondEdge, secondEdgeUV, unfilteredTriangles, currentTriangNumber1, UVtriangle1);
+                    computingEdgeUVTriang (secondEdge, secondEdgeUV, unfilteredTriangles, currentTriangNumber1, UVtriangle1);
 
 
 
@@ -1353,40 +2027,7 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
                     clothObjectArray[i].cloth.particles[firstEdge[0]].returnConstraint(clothObjectArray[i].cloth.particles[secondEdge[1]],"shear").removeSpring();
                     clothObjectArray[i].cloth.particles[sharedVertex].returnConstraint(clothObjectArray[i].cloth.particles[oppositeVertex],"shear").removeSpring();
 
-                    function computingEdgeUV (edge, edgeUV, triangles,triangNumber1, triangNumber2,UVtriangles1, UVtriangles2){
-
-                        for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
-                        {
-                          if (edge[iteratorEdge]===triangles[triangNumber1].a)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[0];
-                          }else
-                          if (edge[iteratorEdge]===triangles[triangNumber1].b)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[1];
-                          }
-                          else
-                          if (edge[iteratorEdge]===triangles[triangNumber1].c)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles1[2];
-                          }else
-
-                          if (edge[iteratorEdge]===triangles[triangNumber2].a)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles2[0];
-                          }else
-                          if (edge[iteratorEdge]===triangles[triangNumber2].b)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles2[1];
-                          }
-                          else
-                          if (edge[iteratorEdge]===triangles[triangNumber2].c)
-                          {
-                            edgeUV[iteratorEdge]=UVtriangles2[2];
-                          }
-                        }
-
-                      }
+                    
 
                       let UVtriangle1= structuredClone(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][currentTriangNumber1]);
                       let UVtriangle2= structuredClone(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][currentTriangNumber2]);
@@ -1396,11 +2037,11 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
 
 
                       let firstEdgeUV=[0,0];
-                      computingEdgeUV (firstEdge, firstEdgeUV, unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+                      computingEdgeUVQuad (firstEdge, firstEdgeUV, unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
 
                       
                       let oppositeEdgeUV=[0,0];
-                      computingEdgeUV (oppositeEdge, oppositeEdgeUV,unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+                      computingEdgeUVQuad (oppositeEdge, oppositeEdgeUV,unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
 
                       console.log(firstEdgeUV);
                       
@@ -1535,50 +2176,17 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
                       let UVtriangle1= structuredClone(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][currentTriangNumber1]);
                       let UVtriangle2= structuredClone(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][currentTriangNumber2]);
                     
-                      function computingEdgeUV (completeEdge, completeEdgeUV, triangles,triangNumber1, triangNumber2,UVtriangles1, UVtriangles2){
-
-                        for (let iteratorEdge=0; iteratorEdge<2;iteratorEdge++)
-                        {
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber1].a)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles1[0];
-                          }else
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber1].b)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles1[1];
-                          }
-                          else
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber1].c)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles1[2];
-                          }else
-
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber2].a)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles2[0];
-                          }else
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber2].b)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles2[1];
-                          }
-                          else
-                          if (completeEdge[iteratorEdge]===triangles[triangNumber2].c)
-                          {
-                            completeEdgeUV[iteratorEdge]=UVtriangles2[2];
-                          }
-                        }
-
-                      }
+                  
                       
                       const completeEdge1= [edgeOfIntersection1[1],edgeOfIntersection2[0]];
                       const completeEdge2= [edgeOfIntersection2[1],edgeOfIntersection1[0]];
 
                       let completeEdge1UV=[0,0];
-                      computingEdgeUV (completeEdge1, completeEdge1UV, unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+                      computingEdgeUVQuad (completeEdge1, completeEdge1UV, unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
 
                       
                       let completeEdge2UV=[0,0];
-                      computingEdgeUV (completeEdge2, completeEdge2UV,unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
+                      computingEdgeUVQuad (completeEdge2, completeEdge2UV,unfilteredTriangles, currentTriangNumber1, currentTriangNumber2, UVtriangle1, UVtriangle2);
 
                       //console.log("completeEdge1UV",completeEdge1UV);
                      // console.log("completeEdge2UV",completeEdge2UV);
@@ -1884,182 +2492,4 @@ function segmentIntersect(x1, y1, x2, y2, depth, x3, y3, x4, y4, ) {
   
   }
 
-
-  function cutClothOriginal(){
-    for (var i=0;i<clothObjectEditionArray.length;i++)
-    {
-      //first step is cutting the constrains
-      let filteredConstraintsEdition=[];
-      let filteredConstraints=[];
-      for (var j=0;j<clothObjectEditionArray[i].cloth.constraints.length;j++)
-      {
-        var position1=clothObjectEditionArray[i].cloth.constraints[j].p1.position;
-        var position2=clothObjectEditionArray[i].cloth.constraints[j].p2.position;
   
-        //TODO:Detect if line interesect with the other line. If they do remove the constrains. To do so reconstruct it with the elements on the same side. for both version of the cloth
-        //looking to preserve equivalence between I th element in a cloth and ith element in the edition version of it. Do the same thing with traingle removal 
-        if (segmentIntersect(position1.x, position1.z, position2.x, position2.z, vertex1.y, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y)==false)
-        {
-  
-          filteredConstraintsEdition.push(clothObjectEditionArray[i].cloth.constraints[j]);
-          filteredConstraints.push(clothObjectArray[i].cloth.constraints[j]);
-  
-        }
-      }
-      clothObjectEditionArray[i].cloth.constraints=filteredConstraintsEdition;
-      clothObjectArray[i].cloth.constraints=filteredConstraints;
-  
-      //second step is cutting the triangles
-      let filteredTriangles=[];
-      let filteredTrianglesEdition=[];
-      let filteredTrianglesUVS=[];
-      let filteredTrianglesEditionUVS=[];
-  
-      newVerticesEdition=[...clothObjectEditionArray[i].cloth.clothGeometry.vertices];
-      newVertices=[...clothObjectArray[i].cloth.clothGeometry.vertices];
-  
-      const unfilteredTrianglesEdition=clothObjectEditionArray[i].cloth.clothGeometry.faces;
-      const unfilteredTriangles=clothObjectArray[i].cloth.clothGeometry.faces;
-      for (var j=0;j<clothObjectEditionArray[i].cloth.clothGeometry.faces.length;j++)
-      {
-        vertex1=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].a];
-        vertex2=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].b];
-        vertex3=clothObjectEditionArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].c];
-  
-        let line1Intersection=segmentIntersect(vertex1.x, vertex1.z, vertex2.x, vertex2.z,vertex1.y, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y);
-        let line2Intersection=segmentIntersect(vertex1.x, vertex1.z, vertex3.x, vertex3.z,vertex1.y, cutStart.x, cutStart.y, cutEnd.x, cutEnd.y);
-        let line3Intersection=segmentIntersect(vertex2.x, vertex2.z, vertex3.x, vertex3.z,vertex1.y,cutStart.x, cutStart.y, cutEnd.x, cutEnd.y);
-  
-  
-        if ((line1Intersection===false)&&
-        (line2Intersection===false)&&
-        (line3Intersection===false))
-        {
-          filteredTrianglesEdition.push(unfilteredTrianglesEdition[j]);
-          filteredTriangles.push(clothObjectEditionArray[i].cloth.clothGeometry.faces[j]);
-  
-          filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-          filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-  
-        }else
-        {
-          vertex1Cloth=clothObjectArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].a];
-          vertex2Cloth=clothObjectArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].b]
-          vertex3Cloth=clothObjectArray[i].cloth.clothGeometry.vertices[unfilteredTrianglesEdition[j].c]
-          if ((line1Intersection!==false)&&(line2Intersection!==false))
-          {
-            newVerticesEdition.push(line1Intersection[1]);
-            newVerticesEdition.push(line2Intersection[1]);
-            newVertices.push(new THREE.Vector3(
-              (2*vertex1.x-vertex2.x-line1Intersection[1].x)/(vertex1.x-vertex2.x)*(vertex1Cloth.x-vertex2Cloth.x)+vertex1Cloth.x
-              ,0,
-              (2*vertex1.z-vertex2.z-line1Intersection[1].z)/(vertex1.z-vertex2.z)*(vertex1Cloth.z-vertex2Cloth.z)+vertex1Cloth.z
-            ));
-  
-            newVertices.push(new THREE.Vector3(
-              (2*vertex1.x-vertex3.x-line2Intersection[1].x)/(vertex1.x-vertex3.x)*(vertex1Cloth.x-vertex3Cloth.x)+vertex1Cloth.x
-              ,0,
-              (2*vertex1.z-vertex3.z-line2Intersection[1].z)/(vertex1.z-vertex3.z)*(vertex1Cloth.z-vertex3Cloth.z)+vertex1Cloth.z
-            ));
-  
-            clothObjectArray[i].cloth.particles.push(new Particle(newVertices[newVertices.length-2].x,newVertices[newVertices.length-2].y, newVertices[newVertices.length-2].z,MASS, false));
-            clothObjectArray[i].cloth.particles.push(new Particle(newVertices[newVertices.length-1].x,newVertices[newVertices.length-1].y, newVertices[newVertices.length-1].z,MASS, false));
-  
-            //TODO: IMPORTANT: the fact that vertex appear 2 times needAFix. probaby array to find
-            //we are going to creat an array using position along the function where the element are. UB is used for that
-  
-  
-            filteredTrianglesEdition.push(new THREE.Face3(unfilteredTrianglesEdition[j].a,newVerticesEdition.length-2,newVerticesEdition.length-1));
-            filteredTriangles.push(new THREE.Face3(unfilteredTriangles[j].a,newVertices.length-2,newVertices.length-1));
-            filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-            filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-  
-  
-  
-            filteredTrianglesEdition.push(new THREE.Face3(unfilteredTrianglesEdition[j].b,newVerticesEdition.length-2,newVerticesEdition.length-1));
-            filteredTriangles.push(new THREE.Face3(unfilteredTriangles[j].b,newVertices.length-2,newVertices.length-1));
-            filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-            filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-  
-  
-            
-            filteredTrianglesEdition.push(new THREE.Face3(unfilteredTrianglesEdition[j].c,unfilteredTrianglesEdition[j].b,newVerticesEdition.length-1));
-            filteredTriangles.push(new THREE.Face3(unfilteredTriangles[j].c,unfilteredTriangles[j].b,newVertices.length-1));
-            filteredTrianglesEditionUVS.push(clothObjectEditionArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-            filteredTrianglesUVS.push(clothObjectArray[i].cloth.clothGeometry.faceVertexUvs[0][j]);
-          }
-  
-        }
-  
-      }
-     
-  
-      //TODO: Chequear que no ocurran memory leaks
-  
-      let newGeometryEdition = new THREE.Geometry();
-  
-      // itemSize = 3 because there are 3 values (components) per vertex
-  
-      newGeometryEdition.vertices=newVerticesEdition;
-  
-      newGeometryEdition.faces=filteredTrianglesEdition;
-  
-      newGeometryEdition.faceVertexUvs[0]=filteredTrianglesEditionUVS;
-  
-  
-      const meshEdition = new THREE.Mesh( newGeometryEdition, clothObjectEditionArray[i].cloth.clothMaterial.clone() );
-      meshEdition.position.set(0,0,0);
-      meshEdition.rotation.x=-Math.PI/2;
-      meshEdition.dynamic=true;
-  
-  
-  
-      let clothEdition=clothObjectEditionArray[i].cloth;
-      clothEdition.clothGeometry=newGeometryEdition;
-  
-  
-      meshEdition.cloth=clothEdition;
-  
-      clothObjectEditionArray[i].cloth.clothGeometry.dispose();
-  
-      sceneEdition.remove(clothObjectEditionArray[i]);
-      clothObjectEditionArray[i]=meshEdition;
-      sceneEdition.add(meshEdition);
-  
-  
-      let newGeometry = new THREE.Geometry();
-  
-      // itemSize = 3 because there are 3 values (components) per vertex
-  
-      newGeometry.vertices=newVertices;
-  
-      newGeometry.faces=filteredTrianglesEdition;
-  
-      newGeometry.faceVertexUvs[0]=filteredTrianglesUVS; 
-  
-  
-      const mesh = new THREE.Mesh( newGeometry, clothObjectArray[i].cloth.clothMaterial.clone() );
-      mesh.position.set(0,0,0);
-  
-      mesh.dynamic=true;
-  
-      mesh.castShadow=true;
-  
-      let clothView=clothObjectArray[i].cloth;
-      clothView.clothGeometry=newGeometry;
-  
-  
-  
-      mesh.cloth=clothView;
-  
-      clothObjectArray[i].cloth.clothGeometry.dispose();
-  
-      scene.remove(clothObjectArray[i]);
-      clothObjectArray[i]=mesh;
-      scene.add(mesh);
-  
-  
-  
-    }
-  
-  }

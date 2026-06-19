@@ -91,8 +91,21 @@ cutListClothArray=[];
 class Cut {
   constructor(currentClothID,startCut,cutEnd) {
     this.countID = cutListClothArray[currentClothID].length;
+
     this.cutStart=startCut;
     this.cutEnd=cutEnd;
+
+    this.cutStartVectorEdition=new THREE.Vector3(this.cutStart.x, clothObjectEditionArray[0].cloth.clothGeometry.vertices[0].y,this.cutStart.y);  
+    this.cutEndVectorEdition=new THREE.Vector3(this.cutEnd.x, clothObjectEditionArray[0].cloth.clothGeometry.vertices[0].y, this.cutEnd.y);
+    
+    //the particle is going to be defined in a random position to next be overriden  when needed. This is a solution to be able to define constraints
+    //without having the value yet
+    this.cutStartParticle=new Particle(this.cutStartVectorEdition.x,this.cutStartVectorEdition.y,this.cutStartVectorEdition.z,MASS,false);
+    this.cutEndParticle=new Particle(this.cutEndVectorEdition.x,this.cutEndVectorEdition.y,this.cutEndVectorEdition.z,MASS,false);
+
+    particleAdded.push(this.cutStartParticle);
+    particleAdded.push(this.cutEndParticle);
+
     this.listOfIntersectionSorted=[];
     cutListClothArray[currentClothID].push(this);
   }
@@ -107,6 +120,23 @@ class Cut {
   getCutEnd()
   {
     return this.cutEnd;
+  }
+    getCutStartVectorEdition()
+  {
+    return this.cutStartVectorEdition;
+  }
+  getCutEndVectorEdition()
+  {
+    return this.cutEndVectorEdition;
+  }
+
+  getCutStartParticle()
+  {
+    return this.cutStartParticle;
+  }
+  getCutEndParticle()
+  {
+    return this.cutEndParticle;
   }
   getListOfIntersectionSorted()
   {

@@ -44,6 +44,12 @@ Particle.prototype.pushToArray=function(arrayInput){
   return arrayInput;
 };
 
+Particle.prototype.overridePosition = function(vector3) {
+  this.position.copy(vector3);
+  this.previous.copy(vector3);
+  this.original.copy(vector3);
+};
+
 Particle.prototype.addSpring=function(constraint, springType){
 
   if (springType==="structural")
